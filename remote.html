@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>นายชด - Mobile Controller</title>
+    
+    <!-- ป้องกันเบราว์เซอร์แจ้งเตือนข้อผิดพลาด Failed to load favicon 404 -->
+    <link rel="icon" href="data:,">
+    
     <style>
         * {
             box-sizing: border-box;
@@ -142,7 +146,7 @@
     </div>
 
     <script>
-        // ดึงช่องสัญญาณรีโมทผ่านแฮชลิงก์ URL (#)
+        // ดึงช่องสัญญาณรีโมทผ่านแฮชลิงก์ URL (#) เพื่อสลับช่องการควบคุมแบบเรียลไทม์ [1]
         let channel = window.location.hash.substring(1) || 'chod_remote_default';
         document.getElementById('channel-display').textContent = `Channel: ${channel}`;
 
@@ -152,7 +156,7 @@
             statusDisplay.textContent = `กำลังส่ง: "${text}"...`;
             
             try {
-                // ส่ง POST Request คำสั่งไปยัง ntfy.sh เพื่อกระจายสัญญาณเรียลไทม์ไปยังบราวเซอร์คอมพิวเตอร์ [1]
+                // ส่ง POST Request ไปยังช่องสัญญาณ ntfy.sh เพื่อให้นายชดหน้าจอคอมพิวเตอร์ดักฟังคำสั่งเรียลไทม์ [1]
                 await fetch(`https://ntfy.sh/${channel}`, {
                     method: 'POST',
                     body: text
