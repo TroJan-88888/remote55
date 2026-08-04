@@ -1,16 +1,47 @@
 // ==============================================================================================
-//    AI MR. CHOD BUTLER SYSTEM - HIGHLY COMPLEX MODULAR ENGINE (ENTERPRISE EDITION - MOBILE OK)
+//  AIMr-Chod.js  AI MR. CHOD BUTLER SYSTEM - COMPLETED UNIFIED MASTER EDITION (ENTERPRISE EDITION - MOBILE OK)
 //    * คุณลักษณะพิเศษ: โครงสร้างแบบโมดูลาร์, มีระบบจำสถานะสนทนา, และตั้งค่าผ่าน GUI ได้ในตัว *
 //    * อัปเดตปรับปรุง: ปรับสัดส่วน GUI, CSS Media Query และ Event Touch ให้แสดงผลสวยงามบนสมาร์ทโฟน 1080 x 1920 px *
-//    * แก้ไขเพิ่มเติม: เปลี่ยนค่าเริ่มต้นอุปกรณ์รีเลย์ทั้งหมดเป็น OFF [false] พร้อมระบบจำสถานะผ่าน LocalStorage *
-//    * ความสามารถใหม่: สั่ง "ไปพัก", "แยกย้าย", "พักผ่อน" เพื่อซ่อนหน้าต่างหลัก และสั่ง "กลับมา" เพื่อเรียกคืนแผงหน้าจอ *
-//    * อัปเกรดระบบตรวจจับคำสั่ง: เพิ่มสถาปัตยกรรม Fuzzy Match ประมวลผลคำสั่งเสียงพูดผิด อักขระเพี้ยนก็สามารถทำงานได้ *
-//    * ระบบเสริมล่าสุด: เพิ่มโมดูลแจ้งเตือนเข้า Telegram Bot อัตโนมัติ (Telegram Notifications) เมื่อสถานะอุปกรณ์เปลี่ยน *
-//    * ฉบับปรับปรุงเพิ่มเติม: แก้ไขบักระบบตั้งเวลารายวัน, ป้องกันอาการกระตุกตอนคลิกลาก และจำกัดความยาวสายอักขระ Fuzzy Match *
+//    * ปรับปรุงเสถียรภาพ: เพิ่มตัววิเคราะห์ความล้มเหลวของการสั่งงาน และแก้ไขบักหน้าจอลากวางในโหมดเต็มจอ *
+//    * ระบบจัดตารางเวลา: รองรับระบบตรวจจับเวลาแบบกฎย่อยหลายข้อ (Smart Ruleset) ร่วมกับตัวตั้งเวลาแกนหลักอย่างสมบูรณ์ *
+//    * โมดูลเสริมในตัว: ระบบ Long Polling Telegram Bot พร้อมฟังก์ชัน Self-recovery กู้คืนการทำงานอัตโนมัติเมื่อเน็ตสะดุด *
 // ==============================================================================================
 
 (function() {
     'use strict';
+
+    let lastUpdateId = 0;
+    let lastPanelMessageId = null; // เก็บไอดีข้อความรีโมตคุมเพื่อใช้แก้ไขปุ่มสดแบบซิงค์เรียลไทม์
+    let lastStateHash = "";        // ตรวจสอบความคืบหน้าเพื่ออัปเดตปุ่มเฉพาะตอนสถานะเปลี่ยน
+    let pollingTimeoutId = null;   // ตัวเก็บ ID ของ setTimeout สำหรับลูปรับคำสั่ง
+    let isPollingActive = false;   // แฟล็กป้องกันการทำงานซ้อนของ Long Polling
+    let pollingSessionId = 0;      // ตัวนับรอบเซสชันเพื่อป้องกัน Race Condition ของอะซิงโครนัส
+
+    // ตารางความจำถาวรและพจนานุกรมอัจฉริยะสำหรับ Telegram Module
+    const PERMANENT_SCHEDULES = {
+        2: {
+            name: "น้ำบ่อปลา",
+            onTime: "09:00",
+            offTime: "18:00",
+            reason: "เพื่อรักษาออกซิเจนและระบบนิเวศของบ่อปลาตามคำสั่งระบบชีวภาพถาวร"
+        }
+    };
+
+    const DAY_MAP = {
+        'จันทร์': 1, 'จัน': 1, 'mon': 1, 'monday': 1,
+        'อังคาร': 2, 'อัง': 2, 'tue': 2, 'tuesday': 2,
+        'พุธ': 3, 'พ': 3, 'wed': 3, 'wednesday': 3,
+        'พฤหัส': 4, 'พฤ': 4, 'thu': 4, 'thursday': 4,
+        'ศุกร์': 5, 'ศ': 5, 'fri': 5, 'friday': 5,
+        'เสาร์': 6, 'ส': 6, 'sat': 6, 'saturday': 6,
+        'อาทิตย์': 0, 'อา': 0, 'sun': 0, 'sunday': 0
+    };
+
+    const ACTION_MAP = {
+        'set': ['ตั้งเวลา', 'ตั้ง', 'เพิ่มเวลา', 'กำหนด', 'set', 'add'],
+        'cancel': ['ยกเลิก', 'ลบ', 'ปิดใช้งาน', 'หยุด', 'clear', 'remove', 'delete'],
+        'view': ['ดู', 'แสดง', 'รายงาน', 'เช็ค', 'มีอะไร', 'view', 'show', 'list']
+    };
 
     // ------------------------------------------------------------
     // 1. ระบบจัดการการตั้งค่าอย่างถาวร (Persistent Settings Manager)
@@ -32,7 +63,6 @@
                     6: { name: "เครื่องกรองน้ำ", on: "http://192.168.1.100/relay6/on", off: "http://192.168.1.100/relay6/off" }
                 },
                 speakSuffix: " ครับเจ้านาย",
-                // ตารางตั้งเวลาเปิดปิดอัตโนมัติเริ่มต้นสำหรับทั้ง 6 รีเลย์
                 schedules: {
                     1: { enabled: false, onTime: "", offTime: "" },
                     2: { enabled: false, onTime: "", offTime: "" },
@@ -41,7 +71,6 @@
                     5: { enabled: false, onTime: "", offTime: "" },
                     6: { enabled: false, onTime: "", offTime: "" }
                 },
-                // นำโครงสร้าง Telegram มารวบรวมจัดเก็บเพื่อให้ตั้งค่าง่ายขึ้น
                 telegram: {
                     enabled: false,
                     botToken: localStorage.getItem("MR_CHOD_TG_BOT_TOKEN") || "",
@@ -55,7 +84,6 @@
                 const stored = localStorage.getItem(this.storageKey);
                 if (stored) {
                     const parsed = JSON.parse(stored);
-                    // ตรวจเช็คเพื่อเติมโครงสร้างข้อมูลตารางเวลาและระบบเตือนหากยังไม่มี
                     if (!parsed.schedules) {
                         parsed.schedules = this.getDefaultConfig().schedules;
                     }
@@ -90,7 +118,6 @@
             this.settingsManager = settingsManager;
         }
 
-        // จัดส่งข้อความไปยังช่องแชต/บอทตามพารามิเตอร์ที่เจ้านายตั้งค่าไว้
         async sendMessage(message) {
             const tg = this.settingsManager.config.telegram;
             if (!tg || !tg.enabled || !tg.botToken || !tg.chatId) {
@@ -122,13 +149,11 @@
             this.settingsManager = settingsManager;
             this.telegramNotifier = telegramNotifier;
             this.stateStorageKey = 'mr_chod_relay_states';
-            // โหลดสถานะจำลองล่าสุดจากหน่วยความจำ หรือใช้ค่าเริ่มต้นปิดทั้งหมด [OFF]
             this.relayStates = this.loadRelayStates();
-            this.lastTriggered = {}; // เก็บสถานะการถูกสั่งงานป้องกันการทำงานซ้ำในเวลาเดียวกัน
+            this.lastTriggered = {}; 
             this.startScheduler();
         }
 
-        // ดึงความจำสถานะล่าสุดของอุปกรณ์
         loadRelayStates() {
             try {
                 const stored = localStorage.getItem(this.stateStorageKey);
@@ -138,11 +163,9 @@
             } catch (e) {
                 console.error("[Butler IoT] ล้มเหลวในการอ่านสถานะรีเลย์เดิม:", e);
             }
-            // ค่าเริ่มต้นปิดการเชื่อมต่อทั้งหมดเมื่อเริ่มใช้งานครั้งแรกสุด
             return { 1: false, 2: false, 3: false, 4: false, 5: false, 6: false };
         }
 
-        // บันทึกความจำสถานะของสวิตช์ลงหน่วยความจำบราวเซอร์
         saveRelayStates() {
             try {
                 localStorage.setItem(this.stateStorageKey, JSON.stringify(this.relayStates));
@@ -155,11 +178,9 @@
             const relay = this.settingsManager.config.relays[relayId];
             if (!relay) return false;
 
-            // ปรับปรุงสถานะภายในและเก็บบันทึกลงหน่วยความจำถาวร
             this.relayStates[relayId] = state;
             this.saveRelayStates();
             
-            // อัปเดตสถานะปุ่มกดบนหน้าจอแสดงผลหากเปิดทำงานอยู่
             if (window.MrChodButlerInstance) {
                 window.MrChodButlerInstance.syncRelayVisualState(relayId, state);
             }
@@ -184,7 +205,6 @@
                 clearTimeout(timeoutId);
                 console.log(`[Butler IoT] สั่งงานอุปกรณ์ [${relay.name}] (${state ? "เปิด" : "ปิด"}) สำเร็จ: ${url}`);
                 
-                // --- เพิ่มระบบส่งการแจ้งเตือนทาง Telegram อัตโนมัติ ---
                 if (this.telegramNotifier) {
                     const statusEmoji = state ? "🟢 เปิด [ON]" : "🔴 ปิด [OFF]";
                     const dateStr = new Date().toLocaleDateString('th-TH');
@@ -196,25 +216,40 @@
                 return true;
             } catch (err) {
                 clearTimeout(timeoutId);
-                console.error(`[Butler IoT] สั่งงานอุปกรณ์ [${relay.name}] ล้มเหลว:`, err);
+                
+                // ปรับปรุงการสกัดสาเหตุข้อผิดพลาดเพื่อความชัดเจนในการแก้ไขปัญหาเครือข่ายภายในบ้าน
+                let errorDetails = "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ";
+                if (err.name === 'AbortError') {
+                    errorDetails = "อุปกรณ์ตอบรับช้าเกิน 5 วินาที (Timeout) หรือเบราว์เซอร์บล็อก Mixed Content เนื่องจากคุณรันระบบบนหน้าเว็บ HTTPS";
+                } else if (err instanceof TypeError) {
+                    errorDetails = "ไม่สามารถเชื่อมต่อไปยังบอร์ดควบคุมได้ เครือข่ายขัดข้อง หรือหมายเลข IP ปลายทางปิดการใช้งานอยู่";
+                } else {
+                    errorDetails = err.message || err;
+                }
+
+                console.error(`[Butler IoT Error] สั่งงานอุปกรณ์ [${relay.name}] ล้มเหลว: ${errorDetails}`);
+                
+                if (window.MrChodButlerInstance) {
+                    window.MrChodButlerInstance.appendLog(`ERR : สั่งงาน [${relay.name}] ล้มเหลว (${errorDetails})`);
+                }
                 return false;
             }
         }
 
-        // ระบบจับเวลานาฬิกาเปรียบเทียบเบื้องหลังเพื่อดำเนินการควบคุมอัตโนมัติ
+        // ระบบตรวจจับเวลากลางเพื่อรองรับตารางเวลาเดี่ยวแบบดั้งเดิม และ Smart Ruleset แบบซ้อนทับกันหลายกฎ
         startScheduler() {
             setInterval(() => {
                 const now = new Date();
+                const day = now.getDay(); // 0 = วันอาทิตย์, 6 = วันเสาร์
                 const hours = String(now.getHours()).padStart(2, '0');
                 const minutes = String(now.getMinutes()).padStart(2, '0');
                 const currentTimeStr = `${hours}:${minutes}`;
 
-                // นำข้อมูล วัน/เดือน/ปี มาร่วมสร้าง Key เพื่อระบุตัวตนการส่งคำสั่งของแต่ละวัน
                 const year = now.getFullYear();
                 const month = String(now.getMonth() + 1).padStart(2, '0');
                 const date = String(now.getDate()).padStart(2, '0');
                 const currentDateStr = `${year}-${month}-${date}`;
-                const triggerKeyVal = `${currentDateStr} ${currentTimeStr}`; // เช่น "2026-08-04 12:34"
+                const triggerKeyVal = `${currentDateStr} ${currentTimeStr}`;
 
                 const schedules = this.settingsManager.config.schedules;
                 if (!schedules) return;
@@ -222,23 +257,44 @@
                 for (const [id, sched] of Object.entries(schedules)) {
                     if (!sched.enabled) continue;
 
-                    // ทำการสั่งเปิดเมื่อถึงเวลาที่กำหนด
-                    const keyOn = `${id}-on`;
-                    if (sched.onTime === currentTimeStr && this.lastTriggered[keyOn] !== triggerKeyVal) {
-                        this.executeCommand(id, true);
-                        this.lastTriggered[keyOn] = triggerKeyVal;
-                        this.notifyScheduleTrigger(id, true);
-                    }
+                    // 1. ตรวจสอบการรันแบบ Smart Ruleset หลายเงื่อนไข
+                    if (Array.isArray(sched.rules)) {
+                        sched.rules.forEach((rule, idx) => {
+                            if (!rule.active) return;
+                            if (rule.days && !rule.days.includes(day)) return;
 
-                    // ทำการสั่งปิดเมื่อถึงเวลาที่กำหนด
-                    const keyOff = `${id}-off`;
-                    if (sched.offTime === currentTimeStr && this.lastTriggered[keyOff] !== triggerKeyVal) {
-                        this.executeCommand(id, false);
-                        this.lastTriggered[keyOff] = triggerKeyVal;
-                        this.notifyScheduleTrigger(id, false);
+                            const keyOn = `${id}-rule-${idx}-on`;
+                            if (rule.onTime === currentTimeStr && this.lastTriggered[keyOn] !== triggerKeyVal) {
+                                this.executeCommand(id, true);
+                                this.lastTriggered[keyOn] = triggerKeyVal;
+                                this.notifyScheduleTrigger(id, true);
+                            }
+
+                            const keyOff = `${id}-rule-${idx}-off`;
+                            if (rule.offTime === currentTimeStr && this.lastTriggered[keyOff] !== triggerKeyVal) {
+                                this.executeCommand(id, false);
+                                this.lastTriggered[keyOff] = triggerKeyVal;
+                                this.notifyScheduleTrigger(id, false);
+                            }
+                        });
+                    } else {
+                        // 2. กรณีไม่มีกติกา Smart Ruleset ให้ทำตามเงื่อนไขตารางเวลาเดี่ยวแบบเดิม
+                        const keyOn = `${id}-on`;
+                        if (sched.onTime === currentTimeStr && this.lastTriggered[keyOn] !== triggerKeyVal) {
+                            this.executeCommand(id, true);
+                            this.lastTriggered[keyOn] = triggerKeyVal;
+                            this.notifyScheduleTrigger(id, true);
+                        }
+
+                        const keyOff = `${id}-off`;
+                        if (sched.offTime === currentTimeStr && this.lastTriggered[keyOff] !== triggerKeyVal) {
+                            this.executeCommand(id, false);
+                            this.lastTriggered[keyOff] = triggerKeyVal;
+                            this.notifyScheduleTrigger(id, false);
+                        }
                     }
                 }
-            }, 10000); // ทำงานตรวจเช็คอย่างสม่ำเสมอในทุก ๆ 10 วินาที
+            }, 10000);
         }
 
         notifyScheduleTrigger(relayId, state) {
@@ -305,9 +361,7 @@
     // 3.5 เครื่องมือคำนวณความใกล้เคียงอักขระ (Fuzzy Match Engine)
     // ------------------------------------------------------------
     class FuzzyMatcher {
-        // อัลกอริทึมวัดระยะห่างความต่างของสองข้อความ (Levenshtein Distance)
         static getLevenshteinDistance(a, b) {
-            // จำกัดความยาวของอักขระที่ส่งเข้าเพื่อหลีกเลี่ยงกระบวนการคำนวณที่หนักหน่วงจนบราวเซอร์ค้าง (Main Thread Lock)
             const limit = 60;
             const cleanA = a.slice(0, limit);
             const cleanB = b.slice(0, limit);
@@ -322,9 +376,9 @@
                         matrix[i][j] = matrix[i - 1][j - 1];
                     } else {
                         matrix[i][j] = Math.min(
-                            matrix[i - 1][j - 1] + 1, // แทนที่ตัวอักษร
-                            matrix[i][j - 1] + 1,     // เพิ่มตัวอักษร
-                            matrix[i - 1][j] + 1      // ลบตัวอักษร
+                            matrix[i - 1][j - 1] + 1, 
+                            matrix[i][j - 1] + 1,     
+                            matrix[i - 1][j] + 1      
                         );
                     }
                 }
@@ -332,14 +386,12 @@
             return matrix[cleanB.length][cleanA.length];
         }
 
-        // แปลงผลระยะต่างเป็นเปอร์เซ็นต์ความคล้ายคลึงระหว่าง 0.0 ถึง 1.0
         static getSimilarity(a, b) {
             const maxLength = Math.max(a.length, b.length);
             if (maxLength === 0) return 1.0;
             return 1.0 - (this.getLevenshteinDistance(a, b) / maxLength);
         }
 
-        // ค้นหาคำเป้าหมายแบบยืดหยุ่นในข้อความประโยคยาว ๆ (Sliding Window Fuzzy Matching)
         static fuzzyContains(text, target, baseThreshold = 0.65) {
             const cleanText = text.toLowerCase().trim();
             const cleanTarget = target.toLowerCase().trim();
@@ -348,14 +400,12 @@
                 return { match: true, score: 1.0 };
             }
 
-            // คำสั่งสั้นมาก (เช่น <= 3 ตัวอักษร) จะปรับระดับความเข้มงวดป้องกันผลซ้ำซ้อน
             const threshold = cleanTarget.length <= 3 ? 0.82 : baseThreshold;
 
             let bestScore = 0;
             const targetLen = cleanTarget.length;
             if (targetLen === 0) return { match: false, score: 0 };
 
-            // สแกนเปรียบเทียบขนาดคำช่วงสั้น +/- 1 ตัวอักษร
             for (let delta = -1; delta <= 1; delta++) {
                 const windowSize = targetLen + delta;
                 if (windowSize <= 0) continue;
@@ -401,7 +451,6 @@
             const cleanText = text.trim().toLowerCase();
             const now = Date.now();
 
-            // คลังกลุ่มคำคล้ายครอบคลุมสถานะเปิดและปิด เพื่อแก้ปัญหาระบบฟังคำสั่งคลาดเคลื่อน
             const onFuzzyList = ["เปิด", "เปิ๊ด", "เบิด", "เปีด", "เป็ด", "on", "ออน", "ใช่", "ตกลง", "เอาเลย"];
             const offFuzzyList = ["ปิด", "ปิ๊ด", "ปิต", "ปิ๊ต", "ปิ๊ด", "off", "ออฟ", "ไม่ใช่", "ยกเลิก", "ไม่เอา"];
 
@@ -420,7 +469,6 @@
                 }
             }
 
-            // คำสั่งลับพิเศษ: สั่ง "trojan" เพื่อทำลายความจำ (และคำสะกดเพี้ยนต่าง ๆ)
             if (FuzzyMatcher.fuzzyContains(cleanText, "trojan", 0.7).match || cleanText.includes("ทรอย") || cleanText.includes("โทรจัน")) {
                 localStorage.removeItem("mr_chod_butler_config");
                 localStorage.removeItem("MR_CHOD_TG_BOT_TOKEN");
@@ -437,7 +485,6 @@
                 return "ตรวจพบคำสั่งรหัสลับ ทรอย ครับเจ้านาย กระผมกำลังดำเนินการล้างความจำเก่าทั้งหมด ล้างไฟล์ขยะระบบ และยกเลิกการตั้งค่าควบคุมทั้งหมดออกจากหน่วยความจำของบราวเซอร์ ระบบหลักจะรีเซ็ตตัวเองและเริ่มต้นการทำงานใหม่ในอีกเจ็ดวินาทีครับ";
             }
 
-            // คำสั่งพิเศษ: สั่ง "ไปพัก" (Fuzzy-enabled)
             const sleepWords = ["ไปพัก", "แยกย้าย", "พักผ่อน", "ปิดหน้าต่างหลัก", "ซ่อนแผงหลัก", "ไปนอน"];
             if (sleepWords.some(w => FuzzyMatcher.fuzzyContains(cleanText, w, 0.7).match)) {
                 const mainWidget = document.getElementById("mr-chod-butler-widget");
@@ -450,7 +497,6 @@
                 return "ขออภัยครับเจ้านาย ไม่พบโมดูลหน้าต่างควบคุมหลักบนจอภาพในขณะนี้ครับ";
             }
 
-            // คำสั่งพิเศษ: สั่ง "กลับมา" (Fuzzy-enabled)
             const wakeWords = ["กลับมา", "แสดงหน้าต่าง", "โชว์หน้าต่าง", "แสดงตัว", "เปิดหน้าต่างหลัก", "ตื่น"];
             if (wakeWords.some(w => FuzzyMatcher.fuzzyContains(cleanText, w, 0.7).match)) {
                 const mainWidget = document.getElementById("mr-chod-butler-widget");
@@ -463,7 +509,6 @@
                 return "ขออภัยครับเจ้านาย ไม่พบข้อมูลหน้าต่างระบบคุณโชดในขณะนี้ครับ";
             }
 
-            // คำสั่งพิเศษ: สั่ง "บัง" เพื่อปิดหน้าต่างการเชื่อมต่อ Telegram (Fuzzy-enabled)
             const hideTGWords = ["บัง", "ซ่อนเทเล", "ซ่อนtelegram", "ปิดเทเล"];
             if (hideTGWords.some(w => FuzzyMatcher.fuzzyContains(cleanText, w, 0.75).match)) {
                 const tgPanel = document.getElementById("tg-config-panel");
@@ -476,7 +521,6 @@
                 return "ขออภัยครับเจ้านาย ไม่พบหน้าต่างแผงควบคุมเทเลแกรมบนหน้าจอในขณะนี้ครับ";
             }
 
-            // คำสั่งพิเศษ: สั่ง "แสดงเทเลแกรม" (Fuzzy-enabled)
             const showTGWords = ["แสดงเทเลแกรม", "โชว์เทเลแกรม", "เปิดเทเลแกรม", "เปิดtelegram"];
             if (showTGWords.some(w => FuzzyMatcher.fuzzyContains(cleanText, w, 0.7).match)) {
                 const tgPanel = document.getElementById("tg-config-panel");
@@ -489,7 +533,6 @@
                 return "ขออภัยครับเจ้านาย ไม่พบโมดูลแผงควบคุมเทเลแกรมเชื่อมต่ออยู่ในปัจจุบันครับ";
             }
 
-            // คำสั่งพิเศษ: แสดงเมนูการเพิ่ม/ตั้งค่าขนาดใหญ่ (Fuzzy-enabled)
             const settingWords = ["จะเพิ่ม", "เปิดตั้งค่า", "ตั้งค่า", "คอนฟิก", "เซ็ตติ้ง"];
             if (settingWords.some(w => FuzzyMatcher.fuzzyContains(cleanText, w, 0.7).match)) {
                 if (window.MrChodButlerInstance) {
@@ -499,7 +542,6 @@
                 return "กระผมดำเนินการเปิดหน้าตั้งค่าคอมฟิกเครือข่ายขนาดใหญ่ให้แล้วครับเจ้านาย สามารถกรอกรายละเอียดและตัวเลขได้ทันทีครับ";
             }
 
-            // คำสั่งพิเศษ: พูดว่า "จะตั้งเวลา" เพื่อดึงแผงเวลาเปิด-ปิดอัตโนมัติ (Fuzzy-enabled)
             const scheduleWords = ["จะตั้งเวลา", "ตั้งเวลา", "เปิดตั้งเวลา", "ตารางเวลา", "สเกดดูล"];
             if (scheduleWords.some(w => FuzzyMatcher.fuzzyContains(cleanText, w, 0.7).match)) {
                 if (window.MrChodButlerInstance) {
@@ -509,7 +551,6 @@
                 return "กระผมกางแผงตั้งเวลาการทำงานอัตโนมัติขยายขนาดใหญ่ให้แล้วครับเจ้านาย สามารถตั้งเวลาเปิดและปิดสำหรับอุปกรณ์แต่ละช่องได้สะดวกเลยครับ";
             }
 
-            // คำสั่งพิเศษ: เปิดระบบทั้งหมด (Fuzzy-enabled)
             const openAllWords = ["เปิดทั้งหมด", "เปิดระบบทั้งหมด", "ออนทั้งหมด"];
             if (openAllWords.some(w => FuzzyMatcher.fuzzyContains(cleanText, w, 0.75).match)) {
                 for (let i = 1; i <= 6; i++) {
@@ -519,7 +560,6 @@
                 return "กระผมสั่งเปิดอุปกรณ์รีเลย์ทั้งหมดในระบบให้เรียบร้อยแล้วครับเจ้านาย";
             }
 
-            // คำสั่งพิเศษ: ปิดระบบทั้งหมด (Fuzzy-enabled)
             const closeAllWords = ["ปิดทั้งหมด", "ปิดระบบทั้งหมด", "ออฟทั้งหมด"];
             if (closeAllWords.some(w => FuzzyMatcher.fuzzyContains(cleanText, w, 0.75).match)) {
                 for (let i = 1; i <= 6; i++) {
@@ -529,7 +569,6 @@
                 return "กระผมดำเนินการตัดการเชื่อมโยงและปิดระบบพลังงานทั้งหมดเรียบร้อยแล้วครับเจ้านาย";
             }
 
-            // คำสั่งพิเศษ: สลับจอควบคุม (Fuzzy-enabled)
             const nextScreenWords = ["ย้ายไปหน้าสอง", "เปิดหน้าสอง", "หน้าสอง", "จอสอง", "เด็คสอง"];
             if (nextScreenWords.some(w => FuzzyMatcher.fuzzyContains(cleanText, w, 0.7).match)) {
                 const btn = document.getElementById("btn-center-screen2") || document.getElementById("btn-dual-monitor");
@@ -541,15 +580,12 @@
                 return "ขออภัยครับเจ้านาย ไม่พบหน้าต่างจอภาพที่สองเชื่อมต่ออยู่ในขณะนี้ครับเจ้านาย";
             }
 
-            // --------------------------------------------------------
-            // ส่วนวิเคราะห์เปรียบเทียบชื่ออุปกรณ์ ด้วยโมเดล Fuzzy Matching
-            // --------------------------------------------------------
+            // วิเคราะห์เปรียบเทียบชื่ออุปกรณ์ ด้วยโมเดล Fuzzy Matching
             let matchedRelayId = null;
             let highestScore = 0;
             const relays = this.settingsManager.config.relays;
 
             for (const [id, info] of Object.entries(relays)) {
-                // วิเคราะห์ระดับความคล้ายคลึงชื่ออุปกรณ์ในช่องสัญญาณต่างๆ (ใช้เกณฑ์ 0.6 สำหรับคำไทยยืดหยุ่น)
                 const result = FuzzyMatcher.fuzzyContains(cleanText, info.name, 0.60);
                 if (result.match && result.score > highestScore) {
                     highestScore = result.score;
@@ -558,7 +594,6 @@
             }
 
             if (matchedRelayId) {
-                // ค้นหาเจตนาสั่งการจากชุดคำพ้องเสียง/สะกดใกล้เคียงของ "เปิด" และ "ปิด"
                 const hasOpen = onFuzzyList.some(kw => FuzzyMatcher.fuzzyContains(cleanText, kw, 0.75).match);
                 const hasClose = offFuzzyList.some(kw => FuzzyMatcher.fuzzyContains(cleanText, kw, 0.75).match);
 
@@ -573,7 +608,6 @@
                     this.clearContext();
                     return `สั่งงานระบบเรียบร้อย: ดำเนินการสั่ง ปิด${relayName} ให้แล้วครับเจ้านาย`;
                 } else {
-                    // หากตรวจพบบทสนทนาระบุชื่อแต่อ่านเจตนาไม่ชัด จะส่งเข้าสู่ระบบยืนยัน
                     this.context.waitingForConfirmation = true;
                     this.context.targetRelayId = matchedRelayId;
                     this.context.timestamp = now;
@@ -631,7 +665,6 @@
                     -webkit-user-select: none;
                     transition: width 0.3s ease, bottom 0.3s, left 0.3s, right 0.3s;
                 }
-                /* สไตล์รองรับกรณีเปิดหน้าต่างตั้งค่าคอมฟิกหรือหน้าตารางตั้งเวลาขนาดใหญ่ */
                 .mr-chod-widget.large {
                     width: 580px !important;
                 }
@@ -822,7 +855,6 @@
                     overflow-y: auto;
                     font-size: 9px;
                 }
-                /* สไตล์ของแผงตั้งเวลาการทำงานอัตโนมัติ */
                 .schedule-gui-panel {
                     display: none;
                     background: rgba(0, 0, 0, 0.8);
@@ -872,13 +904,12 @@
                     50% { transform: translateY(-3px); }
                 }
 
-                /* ตกแต่งและปรับระดับเฟรมให้ยืดหยุ่นพอดีกับหน้าจอมือถือแนวตั้ง (เช่น 1080 x 1920 พิกเซล) */
                 @media (max-width: 540px) {
                     .mr-chod-widget {
                         bottom: 16px !important;
                         right: 16px !important;
                         left: 16px !important;
-                        width: calc(100% - 32px) !important; /* จัดแผงให้อยู่กึ่งกลางหน้าจอมือถือแนวตั้งอย่างสวยงาม */
+                        width: calc(100% - 32px) !important;
                         max-width: none !important;
                         padding: 14px !important;
                     }
@@ -896,7 +927,7 @@
                         margin-bottom: 8px;
                     }
                     .status-grid {
-                        grid-template-columns: 1fr; /* จัดวางสถานะของบอร์ดแบบแถวดิ่ง */
+                        grid-template-columns: 1fr;
                         gap: 8px;
                         padding: 10px;
                     }
@@ -917,7 +948,7 @@
                     }
                     .toggle-badge {
                         font-size: 11px;
-                        padding: 6px 14px; /* ขยายขนาดปุ่มเพื่อเพิ่มพื้นที่สำหรับการทัชสัมผัสบนสมาร์ทโฟน */
+                        padding: 6px 14px;
                         border-radius: 6px;
                     }
                     .log-panel {
@@ -937,8 +968,6 @@
                         font-size: 11px;
                         padding-top: 10px;
                     }
-
-                    /* ดัดแปลงให้ช่องกรอกข้อมูลตั้งค่าของ GUI ซ้อนกันแนวดิ่งเพื่อให้กดพิมพ์ URL ได้สะดวกขึ้น */
                     .settings-gui-panel {
                         max-height: 280px !important;
                     }
@@ -952,8 +981,6 @@
                         padding: 8px 10px !important;
                         font-size: 12px !important;
                     }
-
-                    /* ดัดแปลงให้ตารางตั้งเวลาซ้อนกันแนวดิ่งบนหน้าจอมือถือ */
                     .schedule-gui-panel {
                         max-height: 280px !important;
                     }
@@ -1043,7 +1070,7 @@
                         <div id="settingsContainer"></div>
                         
                         <!-- หน้าต่างแผงควบคุม Telegram สำหรับคำสั่งซ่อน/แสดง -->
-                        <div id="tg-config-panel" style="margin-top: 10px; border-top: 1px solid rgba(56, 189, 248, 0.2); padding-top: 8px;">
+                        <div id="tg-config-panel-inline" style="margin-top: 10px; border-top: 1px solid rgba(56, 189, 248, 0.2); padding-top: 8px;">
                             <div style="font-weight: bold; color: #38bdf8; margin-bottom: 6px;">✈️ การเชื่อมต่อ Telegram Bot</div>
                             <div id="tgSettingsContainer"></div>
                         </div>
@@ -1077,7 +1104,6 @@
             this.voiceStatusText = document.getElementById("voiceStatusText");
             this.voiceVisBar = document.getElementById("voiceVisBar");
 
-            // ดึงข้อมูลอีลิเมนต์ตั้งเวลาเพิ่มเติม
             this.schedulePanel = document.getElementById("mr-chod-schedule");
             this.saveScheduleBtn = document.getElementById("mrChodSaveScheduleBtn");
             this.closeScheduleBtn = document.getElementById("mrChodCloseScheduleBtn");
@@ -1098,13 +1124,12 @@
                 this.minBtn.innerText = this.widget.classList.contains("minimized") ? "[ แสดง ]" : "[ ซ่อน ]";
             });
 
-            // ปรับปรุงให้กดปุ่มตั้งค่าเกียร์แล้วเปิดหน้าจอขยายใหญ่ (large) เพื่อให้ป้อน URL ได้สะดวกขึ้นทันที
             this.settingsBtn.addEventListener("click", () => {
                 const currentDisplay = window.getComputedStyle(this.settingsPanel).display;
                 if (currentDisplay === "none") {
                     this.widget.classList.add("large");
                     this.settingsPanel.style.display = "block";
-                    this.schedulePanel.style.display = "none"; // ปิดหน้าต่างตารางเวลาไม่ให้ทับซ้อน
+                    this.schedulePanel.style.display = "none";
                 } else {
                     this.closeSettings();
                 }
@@ -1115,34 +1140,28 @@
             });
 
             this.saveSettingsBtn.addEventListener("click", () => this.saveSettingsFromGUI());
-
-            // บันทึกและยกเลิกของแผงตั้งเวลาเปิดปิดอัตโนมัติ
             this.saveScheduleBtn.addEventListener("click", () => this.saveScheduleFromGUI());
             this.closeScheduleBtn.addEventListener("click", () => this.closeSchedulePanel());
         }
 
-        // ฟังก์ชันพิเศษสำหรับขยายหน้าต่างขนาดใหญ่ (รองรับการป้อนตัวเลขได้สะดวกขึ้น)
         openLargeSettings() {
             this.widget.classList.add("large");
             this.settingsPanel.style.display = "block";
             this.schedulePanel.style.display = "none";
         }
 
-        // ฟังก์ชันพิเศษสำหรับเปิดแผงตารางตั้งเวลาเปิด-ปิดอัตโนมัติขยายขนาดใหญ่
         openSchedulePanel() {
-            this.buildScheduleForm(); // สร้างฟอร์มเวลาขึ้นมาใหม่ดึงข้อมูลล่าสุด
+            this.buildScheduleForm();
             this.widget.classList.add("large");
             this.schedulePanel.style.display = "block";
             this.settingsPanel.style.display = "none";
         }
 
-        // ฟังก์ชันย่อหน้าจอตารางตั้งเวลากลับสู่ขนาดดั้งเดิม
         closeSchedulePanel() {
             this.widget.classList.remove("large");
             this.schedulePanel.style.display = "none";
         }
 
-        // ฟังก์ชันย่อหน้าจอกลับสู่ขนาดดั้งเดิมทั้งหมด
         closeSettings() {
             this.widget.classList.remove("large");
             this.settingsPanel.style.display = "none";
@@ -1155,13 +1174,11 @@
             const relays = this.settingsManager.config.relays;
             const states = this.iotController.relayStates;
 
-            // คัดเฉพาะคีย์ที่มีการลงทะเบียนไว้จาก Config
             for (const [id, info] of Object.entries(relays)) {
                 const row = document.createElement("div");
                 row.className = "device-row";
                 const isActivated = states[id] || false;
 
-                // กำหนดอิโมจิให้เข้ากับอุปกรณ์โดยอ้างอิงจากคีย์เวิร์ด
                 let emoji = "🔌";
                 if (info.name.includes("ไฟ")) emoji = "💡";
                 else if (info.name.includes("มอเตอร์") || info.name.includes("ปั๊ม") || info.name.includes("น้ำ")) emoji = "💧";
@@ -1176,7 +1193,6 @@
                 `;
                 container.appendChild(row);
 
-                // ดักจับเหตุการณ์คลิกเปิดปิดสวิตช์รีเลย์ผ่านหน้าจอโดยตรง
                 const badge = document.getElementById(`badge-relay-${id}`);
                 badge.addEventListener("click", () => {
                     const currentState = this.iotController.relayStates[id];
@@ -1228,7 +1244,6 @@
                 container.appendChild(row);
             }
 
-            // เรนเดอร์แผงข้อมูลการตั้งค่า Telegram
             const tgContainer = document.getElementById("tgSettingsContainer");
             if (tgContainer) {
                 tgContainer.innerHTML = "";
@@ -1249,7 +1264,6 @@
             }
         }
 
-        // ฟังก์ชันสร้างหน้าตารางเวลาใน GUI แบบไดนามิก
         buildScheduleForm() {
             const container = document.getElementById("scheduleContainer");
             container.innerHTML = "";
@@ -1286,19 +1300,17 @@
                 relays[id].off = document.getElementById(`cfg-off-${id}`).value.trim();
             }
 
-            // บันทึกฟิลด์ข้อมูลการแจ้งเตือน Telegram
             newConfig.telegram = {
                 enabled: document.getElementById("cfg-tg-enabled").checked,
                 botToken: document.getElementById("cfg-tg-token").value.trim(),
                 chatId: document.getElementById("cfg-tg-chatid").value.trim()
             };
 
-            // อัปเดตตัวแปรระบบเดิมเพื่อรักษาระดับการทำงานร่วมกันแบบเดิม
             localStorage.setItem("MR_CHOD_TG_BOT_TOKEN", newConfig.telegram.botToken);
             localStorage.setItem("MR_CHOD_TG_CHAT_ID", newConfig.telegram.chatId);
 
             if (this.settingsManager.saveConfig(newConfig)) {
-                this.closeSettings(); // เปลี่ยนกลับไปมีขนาดเดิมและซ่อนหน้าจอตั้งค่าสำเร็จ
+                this.closeSettings();
                 this.renderDeviceList();
                 this.buildSettingsForm();
                 
@@ -1310,9 +1322,7 @@
             }
         }
 
-        // ฟังก์ชันประมวลผลการบันทึกข้อมูลตารางเวลาและคืนค่าหน้าต่างกลับขนาดปกติ
         saveScheduleFromGUI() {
-            // ป้องกันปัญหาการบันทึกทับอ้างอิงตำแหน่งหน่วยความจำแบบ Shallow Copy
             const newConfig = { 
                 ...this.settingsManager.config,
                 schedules: { ...this.settingsManager.config.schedules }
@@ -1328,7 +1338,7 @@
             }
 
             if (this.settingsManager.saveConfig(newConfig)) {
-                this.closeSchedulePanel(); // คืนสภาพความกว้างและซ่อนแผงควบคุมตารางเวลา
+                this.closeSchedulePanel();
                 
                 const reply = "ปรับเปลี่ยนตารางเวลาเปิดปิดอุปกรณ์ และย่อหน้าต่างกลับสู่ขนาดปกติแล้วครับเจ้านาย";
                 this.appendLog(`AI : ${reply}`);
@@ -1352,7 +1362,6 @@
             
             this.speechEngine.speak(reply, 
                 () => {
-                    // ปรับระดับสถานะ LED กระกริบแสดงคลื่นความถี่เสียง
                     this.voiceStatusText.innerText = "สังเคราะห์เสียง...";
                     this.voiceStatusText.style.color = "#a78bfa";
                 }, 
@@ -1416,9 +1425,6 @@
             });
         }
 
-        // ------------------------------------------------------------
-        // เอนจินการลากแผงควบคุมอิสระ ปราศจากความขัดแย้งของ CSS Transition
-        // ------------------------------------------------------------
         initDraggable() {
             const elmnt = this.widget;
             const header = document.getElementById("mrChodHeader");
@@ -1430,13 +1436,11 @@
             header.addEventListener('mousedown', dragMouseDown);
             header.addEventListener('touchstart', dragTouchStart, { passive: false });
 
-            // ปรับปรุงแก้ไขบัก Draggable UI: ให้ข้ามและหลีกเลี่ยงเฉพาะปุ่มย่อหน้าต่างมินิเท่านั้น เพื่อให้ผู้ใช้สามารถคลิกลากตรงพาดหัวตัวหนังสือหรืออิโมจิได้สมบูรณ์
             function dragMouseDown(e) {
                 if (e.target.id === 'mrChodMinBtn' || e.target.closest('#mrChodMinBtn')) return;
                 
                 e.preventDefault();
 
-                // ปรับปรุง: ล็อคพิกัดสัมบูรณ์ของ UI ก่อนลาก ป้องกันอาการกระตุกดีดตัวในครั้งแรก
                 const rect = elmnt.getBoundingClientRect();
                 elmnt.style.top = rect.top + "px";
                 elmnt.style.left = rect.left + "px";
@@ -1447,7 +1451,7 @@
                 pos4 = e.clientY;
                 
                 originalTransition = elmnt.style.transition;
-                elmnt.style.transition = 'none'; // ปิดแอนิเมชันหน่วงชั่วคราวเพื่อให้ลากเมาส์ลื่นไหล
+                elmnt.style.transition = 'none';
 
                 document.addEventListener('mouseup', closeDragElement);
                 document.addEventListener('mousemove', elementDrag);
@@ -1456,7 +1460,6 @@
             function dragTouchStart(e) {
                 if (e.target.id === 'mrChodMinBtn' || e.target.closest('#mrChodMinBtn')) return;
 
-                // ปรับปรุง: ล็อคพิกัดสัมบูรณ์ของ UI สำหรับจอสัมผัส ป้องกันแผงดีดกระโดดข้ามจอ
                 const rect = elmnt.getBoundingClientRect();
                 elmnt.style.top = rect.top + "px";
                 elmnt.style.left = rect.left + "px";
@@ -1498,13 +1501,1102 @@
             }
 
             function closeDragElement() {
-                elmnt.style.transition = originalTransition; // คืนค่าแอนิเมชันหน่วงของเดิม
+                elmnt.style.transition = originalTransition;
                 document.removeEventListener('mouseup', closeDragElement);
                 document.removeEventListener('mousemove', elementDrag);
                 document.removeEventListener('touchend', closeDragElement);
                 document.removeEventListener('touchmove', elementTouchDrag);
             }
         }
+    }
+
+    // ==============================================================================================
+    //  7. ส่วนรวมโมดูลโทรเลขเชื่อมต่อระบบแกนหลัก (Telegram Integration Extension Inside Core)
+    // ==============================================================================================
+
+    function escapeHTML(text) {
+        if (typeof text !== "string") return "";
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+    }
+
+    async function sendTelegramMessage(text) {
+        const sm = window.MrChodButlerInstance?.settingsManager;
+        if (!sm) return;
+        const tg = sm.config.telegram;
+        if (!tg || !tg.enabled || !tg.botToken || !tg.chatId) return;
+
+        const url = `https://api.telegram.org/bot${tg.botToken}/sendMessage`;
+        try {
+            await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    chat_id: tg.chatId,
+                    text: text,
+                    parse_mode: "HTML"
+                })
+            });
+        } catch (e) {
+            console.error("[Telegram] ส่งข้อความล้มเหลว:", e);
+        }
+    }
+
+    function saveConfigSafely() {
+        const sm = window.MrChodButlerInstance?.settingsManager;
+        if (!sm) return;
+        sm.saveConfig(sm.config);
+    }
+
+    function enforcePermanentSchedules() {
+        const config = window.MrChodButlerInstance?.settingsManager?.config;
+        if (!config) return;
+
+        let needsSave = false;
+        if (!config.schedules) {
+            config.schedules = {};
+            needsSave = true;
+        }
+        if (!config.relays) {
+            config.relays = {};
+            needsSave = true;
+        }
+
+        for (const [relayId, schedInfo] of Object.entries(PERMANENT_SCHEDULES)) {
+            const id = parseInt(relayId);
+
+            if (!config.relays[id] || config.relays[id].name !== schedInfo.name) {
+                if (!config.relays[id]) config.relays[id] = {};
+                config.relays[id].name = schedInfo.name;
+                needsSave = true;
+            }
+
+            if (!config.schedules[id] || !Array.isArray(config.schedules[id].rules)) {
+                config.schedules[id] = {
+                    enabled: true,
+                    rules: []
+                };
+                needsSave = true;
+            }
+
+            const sched = config.schedules[id];
+            if (!sched.enabled) {
+                sched.enabled = true;
+                needsSave = true;
+            }
+
+            let hasValidPermRule = false;
+            if (sched.rules.length === 1) {
+                const r = sched.rules[0];
+                if (r.active && r.onTime === schedInfo.onTime && r.offTime === schedInfo.offTime && r.days.length === 7) {
+                    hasValidPermRule = true;
+                }
+            }
+
+            if (!hasValidPermRule) {
+                sched.rules = [{
+                    days: [0, 1, 2, 3, 4, 5, 6],
+                    onTime: schedInfo.onTime,
+                    offTime: schedInfo.offTime,
+                    active: true
+                }];
+                needsSave = true;
+            }
+
+            if (sched.onTime !== schedInfo.onTime || sched.offTime !== schedInfo.offTime) {
+                sched.onTime = schedInfo.onTime;
+                sched.offTime = schedInfo.offTime;
+                needsSave = true;
+            }
+        }
+
+        if (needsSave) {
+            saveConfigSafely();
+            if (window.MrChodButlerInstance) {
+                window.MrChodButlerInstance.appendLog("⚙️ [System Memory] บังคับรักษาตารางเวลาถาวร (น้ำบ่อปลา: เปิด 07:00 / ปิด 18:00)");
+            }
+        }
+    }
+
+    function findRelayIdByQuery(query, config) {
+        if (!config) return null;
+        query = query.trim().toLowerCase();
+        if (!query) return null;
+
+        const matchNum = query.match(/(?:รีเลย์|relay)\s*0*([1-6])/i) || query.match(/(?<!\w)0*([1-6])(?!\w)/);
+        if (matchNum) {
+            return parseInt(matchNum[1]);
+        }
+
+        if (config.relays) {
+            for (let i = 1; i <= 6; i++) {
+                const rName = config.relays[i]?.name?.toLowerCase();
+                if (rName && (query.includes(rName) || rName.includes(query))) {
+                    return i;
+                }
+            }
+        }
+        return null;
+    }
+
+    function parseSmartSchedule(text) {
+        text = text.trim();
+        const lower = text.toLowerCase();
+
+        let action = 'view';
+        if (ACTION_MAP.cancel.some(k => lower.includes(k))) action = 'cancel';
+        else if (ACTION_MAP.set.some(k => lower.includes(k))) action = 'set';
+
+        const timeRegex = /(?<!\d)([01]?\d|2[0-3])[:.]([0-5]\d)(?!\d)/g;
+        const matches = [...text.matchAll(timeRegex)];
+        let times = matches.map(m => `${m[1].padStart(2,'0')}:${m[2]}`);
+
+        const rangeRegex = /([01]?\d|2[0-3])[:.]([0-5]\d)\s*[-–—]\s*([01]?\d|2[0-3])[:.]([0-5]\d)/;
+        const rangeMatch = text.match(rangeRegex);
+        if (rangeMatch) {
+            times = [
+                `${rangeMatch[1].padStart(2,'0')}:${rangeMatch[2]}`,
+                `${rangeMatch[3].padStart(2,'0')}:${rangeMatch[4]}`
+            ];
+        }
+
+        let days = [];
+        const dayKeys = Object.keys(DAY_MAP).sort((a,b) => b.length - a.length);
+        for (const key of dayKeys) {
+            if (lower.includes(key)) {
+                days.push(DAY_MAP[key]);
+            }
+        }
+        if (days.length === 0 || lower.includes('ทุก') || lower.includes('daily') || lower.includes('เสมอ')) {
+            days = [0, 1, 2, 3, 4, 5, 6];
+        }
+        days = [...new Set(days)].sort((a,b) => a - b);
+
+        let deviceQuery = text;
+        const allActionKeywords = [...ACTION_MAP.set, ...ACTION_MAP.cancel, ...ACTION_MAP.view];
+        for (const kw of allActionKeywords) {
+            deviceQuery = deviceQuery.replace(new RegExp(kw, 'gi'), '');
+        }
+        for (const t of times) {
+            deviceQuery = deviceQuery.replace(new RegExp(t.replace(':', '[:.]'), 'g'), '');
+        }
+        for (const key of dayKeys) {
+            deviceQuery = deviceQuery.replace(new RegExp(key, 'gi'), '');
+        }
+        deviceQuery = deviceQuery.replace(/[^a-zA-Z0-9ก-๙\s]/g, ' ').trim();
+
+        return {
+            action: action,
+            deviceQuery: deviceQuery,
+            times: times,
+            days: days
+        };
+    }
+
+    function formatSmartRule(rule) {
+        const dayNames = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัส', 'ศุกร์', 'เสาร์'];
+        let dayStr = '';
+        if (rule.days.length === 7) dayStr = 'ทุกวัน';
+        else if (rule.days.length === 0) dayStr = 'ไม่ระบุวัน';
+        else dayStr = rule.days.map(d => dayNames[d]).join(', ');
+        
+        let timeStr = '';
+        if (rule.onTime && rule.offTime) timeStr = `🟢 ${rule.onTime} - 🔴 ${rule.offTime}`;
+        else if (rule.onTime) timeStr = `🟢 เปิด ${rule.onTime}`;
+        else if (rule.offTime) timeStr = `🔴 ปิด ${rule.offTime}`;
+        else timeStr = '⏳ ไม่ระบุเวลา';
+
+        return `${dayStr} | ${timeStr} ${rule.active ? '✅' : '⛔'}`;
+    }
+
+    function isOverlapping(rules, newRule) {
+        if (!newRule.onTime || !newRule.offTime) return false;
+        const newStart = newRule.onTime;
+        const newEnd = newRule.offTime;
+        
+        for (const rule of rules) {
+            if (!rule.active) continue;
+            if (!rule.onTime || !rule.offTime) continue;
+            const commonDays = rule.days.filter(d => newRule.days.includes(d));
+            if (commonDays.length === 0) continue;
+            
+            if (newStart < rule.offTime && newEnd > rule.onTime) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    async function handleScheduleCommand(text) {
+        const config = window.MrChodButlerInstance?.settingsManager?.config;
+        if (!config) return "❌ ไม่พบการตั้งค่าระบบแกนหลักครับเจ้านาย";
+
+        const parsed = parseSmartSchedule(text);
+        if (!parsed.deviceQuery) {
+            return "❌ ไม่พบชื่อหรือหมายเลขอุปกรณ์ที่ต้องการจัดการครับ กรุณาระบุให้ชัดเจน (เช่น 'ตั้งเวลา ไฟหน้าคอม 08:00-17:00')";
+        }
+
+        const relayId = findRelayIdByQuery(parsed.deviceQuery, config);
+        if (!relayId) {
+            return `❌ ไม่พบอุปกรณ์ "${escapeHTML(parsed.deviceQuery)}" ในระบบครับ กรุณาตรวจสอบชื่อหรือเลขรีเลย์ (1-6)`;
+        }
+
+        if (PERMANENT_SCHEDULES[relayId]) {
+            const perm = PERMANENT_SCHEDULES[relayId];
+            return `⚠️ <b>${escapeHTML(perm.name)}</b> เป็นระบบตารางถาวร (เปิด ${perm.onTime} / ปิด ${perm.offTime}) ไม่สามารถแก้ไขหรือลบตารางได้ครับ`;
+        }
+
+        if (!config.schedules) config.schedules = {};
+        if (!config.schedules[relayId] || !Array.isArray(config.schedules[relayId].rules)) {
+            const old = config.schedules[relayId] || {};
+            config.schedules[relayId] = {
+                enabled: old.enabled !== undefined ? old.enabled : true,
+                rules: []
+            };
+            if (old.onTime || old.offTime) {
+                config.schedules[relayId].rules.push({
+                    days: [0,1,2,3,4,5,6],
+                    onTime: old.onTime || null,
+                    offTime: old.offTime || null,
+                    active: old.enabled !== false
+                });
+            }
+        }
+
+        const schedule = config.schedules[relayId];
+        const relayName = config.relays?.[relayId]?.name || `รีเลย์ ${relayId}`;
+
+        if (parsed.action === 'cancel') {
+            schedule.rules = [];
+            schedule.enabled = false;
+            schedule.onTime = "";
+            schedule.offTime = "";
+            saveConfigSafely();
+            return `✅ ยกเลิกการตั้งเวลาทั้งหมดของ <b>${escapeHTML(relayName)}</b> เรียบร้อยแล้วครับ`;
+        }
+
+        if (parsed.action === 'view') {
+            if (schedule.rules.length === 0 || !schedule.enabled) {
+                return `📋 <b>${escapeHTML(relayName)}</b>: ไม่มีกฎการตั้งเวลาที่ใช้งานอยู่ครับ`;
+            }
+            let msg = `📋 <b>${escapeHTML(relayName)}</b> มีกฎทั้งหมด ${schedule.rules.length} รายการ:\n`;
+            schedule.rules.forEach((rule, idx) => {
+                msg += `\n${idx+1}. ${escapeHTML(formatSmartRule(rule))}`;
+            });
+            return msg;
+        }
+
+        if (parsed.times.length === 0) {
+            return "❌ ไม่พบเวลาที่ต้องการตั้งครับ (เช่น เปิด 08:00 หรือ 08:00-17:00)";
+        }
+
+        let onTime = null;
+        let offTime = null;
+
+        if (parsed.times.length === 1) {
+            const idxOn = text.toLowerCase().indexOf('เปิด');
+            const idxOff = text.toLowerCase().indexOf('ปิด');
+            if (idxOn !== -1 && (idxOff === -1 || idxOn < idxOff)) {
+                onTime = parsed.times[0];
+            } else if (idxOff !== -1 && (idxOn === -1 || idxOff < idxOn)) {
+                offTime = parsed.times[0];
+            } else {
+                onTime = parsed.times[0];
+            }
+        } else if (parsed.times.length >= 2) {
+            onTime = parsed.times[0];
+            offTime = parsed.times[1];
+            const idxOn = text.toLowerCase().indexOf('เปิด');
+            const idxOff = text.toLowerCase().indexOf('ปิด');
+            if (idxOff !== -1 && idxOn !== -1 && idxOff < idxOn) {
+                [onTime, offTime] = [offTime, onTime];
+            }
+        }
+
+        if (!onTime && !offTime) {
+            return "❌ รูปแบบเวลาไม่ถูกต้อง กรุณาใช้ HH:MM เช่น 08:00 หรือ 08:00-17:00 ครับ";
+        }
+
+        const newRule = {
+            days: parsed.days,
+            onTime: onTime,
+            offTime: offTime,
+            active: true
+        };
+
+        if (schedule.rules.length > 0 && isOverlapping(schedule.rules, newRule)) {
+            return `⚠️ พบว่ากฎนี้ซ้อนทับกับกฎเดิมของ <b>${escapeHTML(relayName)}</b>!\n` +
+                   `📌 กฎใหม่: ${escapeHTML(formatSmartRule(newRule))}\n` +
+                   `💡 ระบบจะ <b>เพิ่มกฎใหม่</b> เข้าไป หากต้องการลบกฎเดิมทั้งหมดให้พิมพ์ "ยกเลิกตั้งเวลา ${escapeHTML(relayName)}" ก่อนนะครับ`;
+        }
+
+        schedule.rules.push(newRule);
+        schedule.enabled = true;
+
+        schedule.onTime = onTime || "";
+        schedule.offTime = offTime || "";
+
+        saveConfigSafely();
+
+        const dayNames = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัส', 'ศุกร์', 'เสาร์'];
+        let dayStr = newRule.days.length === 7 ? 'ทุกวัน' : newRule.days.map(d => dayNames[d]).join(', ');
+        
+        return `✅ ตั้งเวลาสำเร็จสำหรับ <b>${escapeHTML(relayName)}</b>:\n` +
+               `   📅 ${escapeHTML(dayStr)}\n` +
+               `   🕒 ${onTime ? '🟢 เปิด ' + onTime : ''} ${offTime ? '🔴 ปิด ' + offTime : ''}\n` +
+               `   📊 ขณะนี้มีกฎทั้งหมด ${schedule.rules.length} รายการ (ใช้คำสั่ง "ดูตาราง ${escapeHTML(relayName)}" เพื่อเช็คทั้งหมด)`;
+    }
+
+    function getScheduleReport() {
+        enforcePermanentSchedules();
+        const config = window.MrChodButlerInstance?.settingsManager?.config;
+        if (!config || !config.schedules) {
+            return "❌ ไม่พบข้อมูลตารางตั้งเวลาของระบบในขณะนี้ครับเจ้านาย";
+        }
+
+        let report = "⏱️ <b>รายงานตารางเวลาทำงานอัตโนมัติ (Smart)</b> ⚡\n\n";
+        let hasActive = false;
+        const dayNames = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+
+        for (let i = 1; i <= 6; i++) {
+            const relay = config.relays?.[i];
+            const sched = config.schedules?.[i];
+            if (!sched || !sched.enabled || sched.rules?.length === 0) continue;
+            
+            hasActive = true;
+            const isPerm = !!PERMANENT_SCHEDULES[i];
+            const relayName = escapeHTML(relay ? relay.name : `รีเลย์ ${i}`);
+            report += `• <b>${relayName}</b> (R${i}) ${isPerm ? '🛡️' : ''}:\n`;
+            
+            sched.rules.forEach((rule, idx) => {
+                if (!rule.active) return;
+                let daysStr = rule.days.length === 7 ? 'ทุกวัน' : rule.days.map(d => dayNames[d]).join('');
+                let timeStr = '';
+                if (rule.onTime && rule.offTime) timeStr = `${rule.onTime}–${rule.offTime}`;
+                else if (rule.onTime) timeStr = `เปิด ${rule.onTime}`;
+                else if (rule.offTime) timeStr = `ปิด ${rule.offTime}`;
+                report += `  └─ [${idx+1}] ${escapeHTML(daysStr)} ${escapeHTML(timeStr)}\n`;
+            });
+        }
+
+        if (!hasActive) {
+            return "⏱️ <b>ตารางเวลาทำงานอัตโนมัติ</b>\nขณะนี้ <b>ไม่มี</b> อุปกรณ์ใดเปิดใช้งานระบบทำงานอัตโนมัติครับเจ้านาย";
+        }
+        return report;
+    }
+
+    function buildInlineKeyboard() {
+        enforcePermanentSchedules();
+
+        const states = window.MrChodButlerInstance?.iotController?.relayStates || {};
+        const config = window.MrChodButlerInstance?.settingsManager?.config || null;
+
+        const getRelayLabel = (id, defaultName) => {
+            const name = (config?.relays?.[id]) ? config.relays[id].name : defaultName;
+            const activeSymbol = states[id] ? "🟢" : "🔴";
+            const stateText = states[id] ? "ON" : "OFF";
+            const isPerm = !!PERMANENT_SCHEDULES[id];
+            return `${activeSymbol} R${id}: ${name} [${stateText}]${isPerm ? " 🛡️" : ""}`;
+        };
+
+        const currentUrl = window.location.href;
+        const isHttps = window.location.protocol === "https:";
+        if (!isHttps) {
+            console.warn("[Telegram WebApp] เนื่องจากหน้าเว็บปัจจุบันไม่ได้ใช้โปรโตคอล HTTPS ระบบจะแปลงลิงก์สั่งงานปุ่ม Web App ให้เป็นลิงก์เบราว์เซอร์ปกติ");
+        }
+
+        const webAppButton = isHttps 
+            ? { text: "📱 เปิดหน้าสั่งงานเต็มจอ (Web App)", web_app: { url: currentUrl } }
+            : { text: "🌐 เปิดหน้าเว็บ (Browser)", url: currentUrl };
+
+        return [
+            [
+                { text: getRelayLabel(1, "ไฟหน้าคอม"), callback_data: "toggle_1" },
+                { text: getRelayLabel(2, "น้ำบ่อปลา"), callback_data: "toggle_2" }
+            ],
+            [
+                { text: getRelayLabel(3, "จะสวดมนต์"), callback_data: "toggle_3" },
+                { text: getRelayLabel(4, "อุปกรณ์เสริม"), callback_data: "toggle_4" }
+            ],
+            [
+                { text: getRelayLabel(5, "ระบบไฟสวน"), callback_data: "toggle_5" },
+                { text: getRelayLabel(6, "เครื่องกรองน้ำ"), callback_data: "toggle_6" }
+            ],
+            [
+                { text: "☕ Caffeine (คึกคัก)", callback_data: "drug_caffeine" },
+                { text: "💊 Sedative (สงบ)", callback_data: "drug_sedative" }
+            ],
+            [
+                { text: "🌀 Psychedelic (หลอน)", callback_data: "drug_psychedelic" },
+                { text: "🔄 Reset สารเคมี", callback_data: "drug_reset" }
+            ],
+            [
+                webAppButton
+            ],
+            [
+                { text: "📊 รายงานสถานะเครื่อง", callback_data: "get_status" },
+                { text: "📱 ส่งรีโมตตัวใหม่", callback_data: "resend_panel" }
+            ]
+        ];
+    }
+
+    async function sendControlPanel() {
+        const sm = window.MrChodButlerInstance?.settingsManager;
+        if (!sm) return;
+        const tg = sm.config.telegram;
+        if (!tg || !tg.enabled || !tg.botToken || !tg.chatId) return;
+
+        const url = `https://api.telegram.org/bot${tg.botToken}/sendMessage`;
+        const payload = {
+            chat_id: tg.chatId,
+            text: "🤖 <b>MR. CHOD COGNITIVE CONTROLLER</b> ⚡\nยินดีต้อนรับสู่สะพานบัญชาการสำรองของระบบชีวภาพและ IoT บรรจุระบบตรวจจับประจุ สั่งงานได้ผ่านปุ่มตรงล่างนี้ครับเจ้านาย:",
+            parse_mode: "HTML",
+            reply_markup: {
+                inline_keyboard: buildInlineKeyboard()
+            }
+        };
+
+        try {
+            const res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                console.error("[Telegram] บอทไม่สามารถส่งแผงควบคุมได้:", res.status, errData.description);
+                return;
+            }
+            const data = await res.json();
+            if (data.ok) {
+                lastPanelMessageId = data.result.message_id;
+            }
+        } catch (e) {
+            console.error("[Telegram] ส่งแผงรีโมตล้มเหลว:", e);
+        }
+    }
+
+    async function updateControlPanel() {
+        const sm = window.MrChodButlerInstance?.settingsManager;
+        if (!sm) return;
+        const tg = sm.config.telegram;
+        if (!tg || !tg.enabled || !tg.botToken || !tg.chatId || !lastPanelMessageId) return;
+
+        const url = `https://api.telegram.org/bot${tg.botToken}/editMessageReplyMarkup`;
+        const payload = {
+            chat_id: tg.chatId,
+            message_id: lastPanelMessageId,
+            reply_markup: {
+                inline_keyboard: buildInlineKeyboard()
+            }
+        };
+
+        try {
+            await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+        } catch (e) {
+            // ละเว้นกรณีที่สถานะไม่มีการเปลี่ยน
+        }
+    }
+
+    async function sendStatusReport() {
+        const states = window.MrChodButlerInstance?.iotController?.relayStates || {};
+        const config = window.MrChodButlerInstance?.settingsManager?.config || null;
+        
+        let relayStatusText = "";
+        for (let i = 1; i <= 6; i++) {
+            const name = (config?.relays?.[i]) ? config.relays[i].name : `รีเลย์ ${i}`;
+            const active = states[i] ? "🟢 ON" : "🔴 OFF";
+            const isPerm = !!PERMANENT_SCHEDULES[i];
+            relayStatusText += `• ${escapeHTML(name)}${isPerm ? " 🛡️" : ""}: <b>${active}</b>\n`;
+        }
+
+        let brainText = "• ไม่พบข้อมูลเชื่อมต่อ ChodBrain 3D Map";
+        if (window.ChodBrain && window.ChodBrain.neurotransmitters) {
+            const nt = window.ChodBrain.neurotransmitters;
+            brainText = `• โดพามีน (DOP): <b>${(nt.dopamine || 0).toFixed(3)}</b>\n` +
+                        `• เซโรโทนิน (5-HT): <b>${(nt.serotonin || 0).toFixed(3)}</b>\n` +
+                        `• อะดรีนาลีน (EPI): <b>${(nt.adrenaline || 0).toFixed(3)}</b>\n` +
+                        `• ดัชนีโมเลกุลรบกวน (Frustration): <b>${(window.ChodBrain.frustrationScore || 0).toFixed(3)}</b>`;
+        }
+
+        const report = `📊 <b>รายงานดัชนีตรวจวัดประสาทและ IoT</b> ⚡\n\n` +
+                       `🔌 <b>สวิตช์สถานะอุปกรณ์รีเลย์:</b>\n${relayStatusText}\n` +
+                       `🧠 <b>โครงข่ายชีวภาพ ChodBrain:</b>\n${brainText}\n\n` +
+                       `📅 ซิงค์เมื่อเวลา: ${new Date().toLocaleTimeString()}`;
+
+        await sendTelegramMessage(report);
+    }
+
+    async function handleTelegramUpdate(update) {
+        const sm = window.MrChodButlerInstance?.settingsManager;
+        if (!sm) return;
+        const tg = sm.config.telegram;
+        if (!tg || !tg.enabled || !tg.botToken || !tg.chatId) return;
+
+        const incomingChatId = String(update.message?.chat?.id || update.callback_query?.message?.chat?.id || "");
+        if (incomingChatId !== String(tg.chatId)) {
+            console.warn("[Telegram Security Warning] มีการพยายามควบคุมระบบจากภายนอกโดยไม่ได้รับอนุญาต:", incomingChatId);
+            return;
+        }
+
+        if (update.callback_query) {
+            const query = update.callback_query;
+            const callbackData = query.data;
+            const queryId = query.id;
+
+            try {
+                await fetch(`https://api.telegram.org/bot${tg.botToken}/answerCallbackQuery`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ callback_query_id: queryId, text: "คุณโชดรับคำสั่งแล้วครับ" })
+                });
+            } catch (err) {
+                console.error("[Telegram] answerCallbackQuery ล้มเหลว:", err);
+            }
+
+            if (callbackData.startsWith("toggle_")) {
+                const id = parseInt(callbackData.split("_")[1]);
+                if (window.MrChodButlerInstance?.iotController) {
+                    const currentState = window.MrChodButlerInstance.iotController.relayStates[id];
+                    await window.MrChodButlerInstance.iotController.executeCommand(id, !currentState);
+                    window.MrChodButlerInstance.appendLog(`SYS: [Telegram Bot] สลับสถานะสวิตช์ Relay ${id}`);
+                }
+            } else if (callbackData.startsWith("drug_")) {
+                const type = callbackData.split("_")[1];
+                const drugFn = window.setDrug || (typeof setDrug === "function" ? setDrug : null);
+                if (drugFn) {
+                    drugFn(type === "reset" ? null : type);
+                    if (window.MrChodButlerInstance) {
+                        window.MrChodButlerInstance.appendLog(`SYS: [Telegram Bot] ปล่อยสารเคมีเสมือน: ${type.toUpperCase()}`);
+                    }
+                }
+            } else if (callbackData === "get_status") {
+                await sendStatusReport();
+            } else if (callbackData === "resend_panel") {
+                await sendControlPanel();
+            }
+            return;
+        }
+
+        if (update.message && update.message.text) {
+            const rawText = update.message.text.trim();
+            const lowerText = rawText.toLowerCase();
+
+            if (lowerText.startsWith("/")) {
+                if (lowerText === "/start" || lowerText === "/menu" || lowerText === "/help") {
+                    await sendControlPanel();
+                }
+                return;
+            }
+
+            const isScheduleRelated = lowerText.includes("ตั้งเวลา") || lowerText.includes("ตั่งเวลา") || lowerText.includes("ตารางเวลา") || lowerText.includes("สเกดูล");
+            
+            if (isScheduleRelated) {
+                const isCancel = /(ยกเลิก|ลบ|ปิดระบบ|ปิดตาราง|ปิดสเกดูล|ปิดใช้งาน)/.test(lowerText);
+                const hasTime = /(?<!\d)(?:[01]?\d|2[0-3])[:.][0-5]\d(?!\d)/.test(lowerText);
+
+                if (isCancel || hasTime) {
+                    const scheduleResponse = await handleScheduleCommand(rawText);
+                    await sendTelegramMessage(scheduleResponse);
+
+                    if (window.MrChodButlerInstance) {
+                        window.MrChodButlerInstance.appendLog(`> [Telegram Bot CMD] จัดการเวลา: ${rawText}`);
+                        window.MrChodButlerInstance.appendLog(`AI : ${scheduleResponse.replace(/<[^>]*>/g, "")}`);
+                    }
+                    return;
+                } else {
+                    const schedReport = getScheduleReport();
+                    await sendTelegramMessage(schedReport);
+                    
+                    if (window.MrChodButlerInstance) {
+                        window.MrChodButlerInstance.appendLog(`> [Telegram Bot CMD] ตรวจสอบตารางเวลา`);
+                        window.MrChodButlerInstance.appendLog(`AI : ดำเนินการสรุปตารางเวลาส่งกลับโทรเลขเรียบร้อยแล้วครับ`);
+                    }
+                    return;
+                }
+            }
+
+            if (window.MrChodButlerInstance?.intentParser) {
+                window.MrChodButlerInstance.appendLog(`> [Telegram Bot CMD] ${rawText}`);
+                
+                const replyResult = window.MrChodButlerInstance.intentParser.parseIntent(rawText);
+                
+                window.MrChodButlerInstance.appendLog(`AI : ${replyResult}`);
+                window.MrChodButlerInstance.speechEngine?.speak?.(replyResult);
+
+                await sendTelegramMessage(`🤖 <b>AI :</b> ${escapeHTML(replyResult)}`);
+            }
+        }
+    }
+
+    async function startPollingTelegram() {
+        const sm = window.MrChodButlerInstance?.settingsManager;
+        if (!sm) {
+            isPollingActive = false;
+            return;
+        }
+        const tg = sm.config.telegram;
+        if (!tg || !tg.enabled || !tg.botToken || !tg.chatId) {
+            isPollingActive = false;
+            return;
+        }
+
+        isPollingActive = true;
+        const currentSession = ++pollingSessionId;
+
+        const url = `https://api.telegram.org/bot${tg.botToken}/getUpdates?offset=${lastUpdateId + 1}&timeout=30`;
+        try {
+            const res = await fetch(url);
+            
+            if (!isPollingActive || currentSession !== pollingSessionId) return;
+
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                console.error("[Telegram] API Error:", res.status, errData.description);
+                
+                if (res.status === 401 || res.status === 403) {
+                    console.warn("[Telegram] การตรวจสอบสิทธิ์ล้มเหลว ระงับการทำงาน");
+                    stopPollingTelegram();
+                    return;
+                }
+                
+                pollingTimeoutId = setTimeout(startPollingTelegram, 5000);
+                return;
+            }
+
+            const data = await res.json();
+            if (data.ok && data.result.length > 0) {
+                for (const update of data.result) {
+                    lastUpdateId = update.update_id;
+                    await handleTelegramUpdate(update);
+                }
+            }
+        } catch (e) {
+            console.error("[Telegram] เกิดข้อผิดพลาดในลูปรับคำสั่ง:", e);
+            
+            if (isPollingActive && currentSession === pollingSessionId) {
+                pollingTimeoutId = setTimeout(startPollingTelegram, 5000);
+            }
+            return;
+        }
+        
+        if (isPollingActive && currentSession === pollingSessionId) {
+            pollingTimeoutId = setTimeout(startPollingTelegram, 1000);
+        }
+    }
+
+    function stopPollingTelegram() {
+        isPollingActive = false;
+        if (pollingTimeoutId) {
+            clearTimeout(pollingTimeoutId);
+            pollingTimeoutId = null;
+        }
+    }
+
+    function checkRealtimeStateSync() {
+        if (!window.MrChodButlerInstance?.iotController) return;
+        const states = window.MrChodButlerInstance.iotController.relayStates;
+        const currentHash = Object.entries(states).map(([id, val]) => `${id}:${val}`).join(",");
+        
+        if (currentHash !== lastStateHash) {
+            lastStateHash = currentHash;
+            updateControlPanel();
+        }
+    }
+
+    function injectConfigurationUI() {
+        if (document.getElementById("tg-config-panel")) return;
+
+        const style = document.createElement("style");
+        style.textContent = `
+            #tg-config-panel {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: #18181b;
+                border: 1px solid #3f3f46;
+                border-radius: 8px;
+                padding: 12px;
+                width: 270px;
+                color: #e4e4e7;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                font-size: 13px;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+                z-index: 10000030;
+                transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), bottom 0.3s, left 0.3s, right 0.3s, width 0.3s;
+                box-sizing: border-box;
+                cursor: grab;
+                user-select: none;
+                -webkit-user-select: none;
+            }
+            #tg-config-panel:active {
+                cursor: grabbing;
+            }
+            #tg-config-panel.minimized {
+                transform: translateY(calc(100% - 35px));
+            }
+            #tg-config-panel.fullscreen {
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                border-radius: 0 !important;
+                border: none !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                background: rgba(24, 24, 27, 0.98) !important;
+                backdrop-filter: blur(8px) !important;
+                cursor: default !important;
+            }
+            #tg-config-panel h4 {
+                margin: 0 0 8px 0;
+                font-size: 14px;
+                color: #f4f4f5;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            #tg-config-panel .tg-controls-wrapper {
+                display: flex;
+                gap: 8px;
+                font-size: 11px;
+            }
+            #tg-config-panel .tg-btn-link {
+                cursor: pointer;
+                padding: 2px 6px;
+                border-radius: 4px;
+                background: #27272a;
+                border: 1px solid #3f3f46;
+                transition: background 0.2s;
+                user-select: none;
+                -webkit-user-select: none;
+            }
+            #tg-config-panel .tg-btn-link:hover {
+                background: #3f3f46;
+                color: #fff;
+            }
+            #tg-config-panel #tg-panel-body {
+                transition: opacity 0.2s;
+            }
+            #tg-config-panel.minimized #tg-panel-body {
+                opacity: 0;
+                pointer-events: none;
+            }
+            #tg-config-panel.fullscreen #tg-panel-body {
+                width: 100% !important;
+                max-width: 420px !important;
+                background: #202023 !important;
+                padding: 24px !important;
+                border-radius: 8px !important;
+                border: 1px solid #3f3f46 !important;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7) !important;
+            }
+            #tg-config-panel label {
+                display: block;
+                margin-top: 8px;
+                color: #a1a1aa;
+                font-size: 11px;
+                user-select: none;
+                -webkit-user-select: none;
+            }
+            #tg-config-panel input {
+                width: 100%;
+                box-sizing: border-box;
+                background: #27272a;
+                border: 1px solid #52525b;
+                color: #fff;
+                padding: 6px 10px;
+                border-radius: 4px;
+                margin-top: 4px;
+                font-size: 12px;
+                cursor: text;
+                user-select: text !important;
+                -webkit-user-select: text !important;
+            }
+            #tg-config-panel button {
+                width: 100%;
+                background: #2563eb;
+                color: #fff;
+                border: none;
+                padding: 8px;
+                border-radius: 4px;
+                margin-top: 12px;
+                cursor: pointer;
+                font-weight: bold;
+                transition: background 0.2s;
+                user-select: none;
+                -webkit-user-select: none;
+            }
+            #tg-config-panel button:hover {
+                background: #1d4ed8;
+            }
+
+            @media (max-width: 540px) {
+                #tg-config-panel:not(.fullscreen) {
+                    bottom: 16px;
+                    right: 16px;
+                    left: 16px;
+                    width: calc(100% - 32px) !important;
+                    max-width: none;
+                    padding: 16px;
+                }
+                #tg-config-panel.minimized {
+                    transform: translateY(calc(100% - 40px));
+                }
+                #tg-config-panel h4 {
+                    font-size: 15px;
+                    margin-bottom: 12px;
+                }
+                #tg-config-panel .tg-btn-link {
+                    padding: 4px 8px;
+                    font-size: 12px;
+                }
+                #tg-config-panel .tg-controls-wrapper {
+                    gap: 12px;
+                }
+                #tg-config-panel label {
+                    font-size: 12px;
+                    margin-top: 12px;
+                }
+                #tg-config-panel input {
+                    padding: 10px 12px;
+                    font-size: 14px;
+                    margin-top: 6px;
+                }
+                #tg-config-panel button {
+                    padding: 12px;
+                    font-size: 14px;
+                    margin-top: 16px;
+                }
+                #tg-config-panel.fullscreen #tg-panel-body {
+                    width: calc(100% - 32px);
+                    margin: 16px;
+                    padding: 20px;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        const container = document.createElement("div");
+        container.id = "tg-config-panel";
+        
+        const sm = window.MrChodButlerInstance?.settingsManager;
+        const tg = sm ? sm.config.telegram : { botToken: "", chatId: "" };
+
+        container.innerHTML = `
+            <h4>
+                <span>🤖 Telegram Config</span>
+                <div class="tg-controls-wrapper">
+                    <span id="tg-minimize-btn" class="tg-btn-link" style="color:#3b82f6;">ย่อ/ขยาย</span>
+                    <span id="tg-fullscreen-btn" class="tg-btn-link" style="color:#10b981;">เต็มจอ</span>
+                </div>
+            </h4>
+            <div id="tg-panel-body">
+                <label>Telegram Bot Token:</label>
+                <input type="password" id="tg-token-input" placeholder="กรอก Bot Token...">
+                
+                <label>Telegram Chat ID:</label>
+                <input type="text" id="tg-chat-input" placeholder="กรอก Chat ID...">
+                
+                <button id="tg-save-btn">บันทึกและเชื่อมต่อ</button>
+            </div>
+        `;
+
+        document.body.appendChild(container);
+
+        document.getElementById("tg-token-input").value = tg.botToken || "";
+        document.getElementById("tg-chat-input").value = tg.chatId || "";
+
+        let isDragging = false;
+        let startX, startY;
+
+        container.addEventListener("mousedown", (e) => {
+            if (e.button !== 0) return;
+
+            const target = e.target;
+            const tag = target.tagName;
+            if (
+                tag === "INPUT" || 
+                tag === "BUTTON" || 
+                tag === "A" || 
+                target.classList.contains("tg-btn-link") ||
+                target.closest(".tg-controls-wrapper")
+            ) {
+                return;
+            }
+
+            if (container.classList.contains("fullscreen")) return;
+
+            isDragging = true;
+            const rect = container.getBoundingClientRect();
+            startX = e.clientX - rect.left;
+            startY = e.clientY - rect.top;
+
+            container.style.bottom = "auto";
+            container.style.right = "auto";
+            container.style.left = `${rect.left}px`;
+            container.style.top = `${rect.top}px`;
+
+            e.preventDefault();
+        });
+
+        document.addEventListener("mousemove", (e) => {
+            if (!isDragging) return;
+
+            let newLeft = e.clientX - startX;
+            let newTop = e.clientY - startY;
+
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const panelWidth = container.offsetWidth;
+            const panelHeight = container.offsetHeight;
+
+            if (newLeft < 0) newLeft = 0;
+            if (newTop < 0) newTop = 0;
+            if (newLeft + panelWidth > viewportWidth) newLeft = viewportWidth - panelWidth;
+            if (newTop + panelHeight > viewportHeight) newTop = viewportHeight - panelHeight;
+
+            container.style.left = `${newLeft}px`;
+            container.style.top = `${newTop}px`;
+        });
+
+        document.addEventListener("mouseup", () => {
+            isDragging = false;
+        });
+
+        container.addEventListener("touchstart", (e) => {
+            const target = e.target;
+            const tag = target.tagName;
+            if (
+                tag === "INPUT" || 
+                tag === "BUTTON" || 
+                tag === "A" || 
+                target.classList.contains("tg-btn-link") ||
+                target.closest(".tg-controls-wrapper")
+            ) {
+                return;
+            }
+
+            if (container.classList.contains("fullscreen")) return;
+
+            isDragging = true;
+            const touch = e.touches[0];
+            const rect = container.getBoundingClientRect();
+            startX = touch.clientX - rect.left;
+            startY = touch.clientY - rect.top;
+
+            container.style.bottom = "auto";
+            container.style.right = "auto";
+            container.style.left = `${rect.left}px`;
+            container.style.top = `${rect.top}px`;
+        }, { passive: true });
+
+        document.addEventListener("touchmove", (e) => {
+            if (!isDragging) return;
+            const touch = e.touches[0];
+            
+            let newLeft = touch.clientX - startX;
+            let newTop = touch.clientY - startY;
+
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const panelWidth = container.offsetWidth;
+            const panelHeight = container.offsetHeight;
+
+            if (newLeft < 0) newLeft = 0;
+            if (newTop < 0) newTop = 0;
+            if (newLeft + panelWidth > viewportWidth) newLeft = viewportWidth - panelWidth;
+            if (newTop + panelHeight > viewportHeight) newTop = viewportHeight - panelHeight;
+
+            container.style.left = `${newLeft}px`;
+            container.style.top = `${newTop}px`;
+            
+            if (e.cancelable) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        document.addEventListener("touchend", () => {
+            isDragging = false;
+        });
+
+        const minimizeBtn = document.getElementById("tg-minimize-btn");
+        const fullscreenBtn = document.getElementById("tg-fullscreen-btn");
+
+        minimizeBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (container.classList.contains("fullscreen")) {
+                container.classList.remove("fullscreen");
+            }
+            container.classList.toggle("minimized");
+        });
+
+        fullscreenBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (container.classList.contains("minimized")) {
+                container.classList.remove("minimized");
+            }
+            container.classList.toggle("fullscreen");
+        });
+
+        const saveBtn = document.getElementById("tg-save-btn");
+        saveBtn.addEventListener("click", async () => {
+            const tokenVal = document.getElementById("tg-token-input").value;
+            const chatVal = document.getElementById("tg-chat-input").value;
+
+            saveTelegramCredentials(tokenVal, chatVal);
+            
+            if (window.MrChodButlerInstance) {
+                const config = window.MrChodButlerInstance.settingsManager.config;
+                config.telegram.botToken = tokenVal.trim();
+                config.telegram.chatId = chatVal.trim();
+                config.telegram.enabled = (tokenVal.trim() !== "" && chatVal.trim() !== "");
+                saveConfigSafely();
+
+                window.MrChodButlerInstance.appendLog("🤖 [Telegram] ทำการบันทึกการตั้งค่า Token และ Chat ID ใหม่เรียบร้อย!");
+            }
+
+            stopPollingTelegram();
+            lastPanelMessageId = null;
+            lastStateHash = "";
+
+            if (tokenVal && chatVal) {
+                await sendControlPanel();
+                startPollingTelegram();
+                
+                container.classList.remove("fullscreen");
+                container.classList.add("minimized");
+            }
+        });
+    }
+
+    function bootstrapTelegramLink() {
+        injectConfigurationUI();
+        enforcePermanentSchedules();
+
+        const sm = window.MrChodButlerInstance?.settingsManager;
+        if (sm) {
+            const tg = sm.config.telegram;
+            if (tg && tg.botToken && tg.chatId) {
+                sendControlPanel();
+                startPollingTelegram();
+            } else {
+                window.MrChodButlerInstance.appendLog("⚠️ [Telegram Extension] กรุณาระบุ Token และ Chat ID เพื่อเริ่มต้นการเชื่อมต่อ");
+            }
+        }
+        
+        setInterval(checkRealtimeStateSync, 2000);
+        window.MrChodButlerInstance.appendLog("🤖 [Mr. Chod Telegram Extension] ระบบโมดูลรีโมตสแตนด์บายพร้อมทำงาน!");
     }
 
     // ------------------------------------------------------------
@@ -1518,8 +2610,10 @@
         const parser = new IntentParser(settings, iot);
         
         window.MrChodButlerInstance = new ButlerUI(settings, speech, parser, iot);
-        
-        console.log("🤖 [Mr. Chod Butler] แกนระบบควบคุมเครือข่ายและระบบยิงสัญญาณแจ้งเตือน Telegram สำเร็จแล้วครับเจ้านาย!");
+        console.log("🤖 [Mr. Chod Butler] แกนระบบควบคุมเครือข่ายสำเร็จแล้ว!");
+
+        // ผสานการทำงานโมดูลรีโมตควบคุมและบอทของ Telegram ต่อทันที
+        bootstrapTelegramLink();
     }
 
     if (document.readyState === "loading") {
