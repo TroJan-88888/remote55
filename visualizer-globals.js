@@ -6,9 +6,9 @@
 var TrojanAI_Config = {
     baseURL: "http://192.168.1.188",
     relays: {
-        1: { name: "ไฟหลัก", on: "http://192.168.1.40/toggle", off: "http://192.168.1.40/toggle" },
-        2: { name: "มอเตอร์ปั๊ม", on: "http://192.168.1.189/RELAY=ON", off: "http://192.168.1.189/RELAY=OFF" },
-        3: { name: "ระบายอากาศ", on: "http://192.168.1.188/ON", off: "http://192.168.1.188/OFF" },
+        1: { name: "ไฟหน้าคอม", on: "http://192.168.1.188/ONVIDEO", off: "http://192.168.1.188/OFFVIDEO" },
+        2: { name: "น้ำบ่อปลา", on: "http://192.168.1.189/RELAY=ON", off: "http://192.168.1.189/RELAY=OFF" },
+        3: { name: "จะสวดมนต์", on: "http://192.168.1.100/relay3/on", off: "http://192.168.1.100/relay3/off" },
         4: { name: "อุปกรณ์เสริม", on: "http://192.168.1.188/ONVIDEO", off: "http://192.168.1.188/OFFVIDEO" },
         5: { name: "ไฟสวน", on: "http://192.168.1.188/ON", off: "http://192.168.1.188/OFF" },
         6: { name: "เครื่องกรองน้ำ", on: "http://192.168.1.188/ON", off: "http://192.168.1.188/OFF" }
