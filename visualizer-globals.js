@@ -4,7 +4,7 @@
 
 // 1. การตั้งค่าระบบเชื่อมต่อ TrojanAI IoT Relay
 var TrojanAI_Config = {
-    baseURL: "http://192.168.1.188",
+    baseURL: "http://192.168.1.188/ONVIDEO",
     relays: {
         1: { name: "ไฟหน้าคอม", on: "http://192.168.1.188/ONVIDEO", off: "http://192.168.1.188/OFFVIDEO" },
         2: { name: "น้ำบ่อปลา", on: "http://192.168.1.189/RELAY=ON", off: "http://192.168.1.189/RELAY=OFF" },
