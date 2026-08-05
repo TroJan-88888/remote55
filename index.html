@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>Chod Cognitive System | Command Portal</title>
     <style>
         * {
@@ -15,11 +15,13 @@
             color: #38bdf8;
             font-family: 'Segoe UI', 'Courier New', monospace;
             height: 100vh;
+            height: 100dvh;
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: hidden;
             position: relative;
+            padding: 16px;
         }
         body::before {
             content: "";
@@ -33,27 +35,28 @@
             pointer-events: none;
         }
 
-        /* ===== ปุ่มเล็กๆ มุมบนขวา ===== */
         .toggle-btn {
             position: fixed;
-            top: 16px;
-            right: 16px;
+            top: clamp(8px, 2vh, 16px);
+            right: clamp(8px, 2vw, 16px);
             z-index: 9999;
             background: rgba(56, 189, 248, 0.12);
             border: 1px solid rgba(56, 189, 248, 0.3);
             color: #38bdf8;
-            font-size: 18px;
-            width: 42px;
-            height: 42px;
+            font-size: clamp(16px, 4vw, 22px);
+            width: clamp(36px, 8vw, 48px);
+            height: clamp(36px, 8vw, 48px);
             border-radius: 50%;
             cursor: pointer;
             backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
             transition: all 0.25s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             font-family: 'Courier New', monospace;
             box-shadow: 0 0 15px rgba(56, 189, 248, 0.1);
+            touch-action: manipulation;
         }
         .toggle-btn:hover {
             background: rgba(56, 189, 248, 0.25);
@@ -64,61 +67,82 @@
         .toggle-btn:active {
             transform: scale(0.92);
         }
-        /* ไอคอนในปุ่ม (ใช้สัญลักษณ์แทนข้อความ) */
-        .toggle-btn .icon-cmd { font-size: 14px; font-weight: bold; letter-spacing: 1px; }
+        .toggle-btn .icon-cmd { 
+            font-size: clamp(12px, 3vw, 16px); 
+            font-weight: bold; 
+            letter-spacing: 1px; 
+        }
 
-        /* ===== Portal Card ===== */
         .portal-card {
             background: rgba(4, 11, 23, 0.85);
             border: 1px solid rgba(56, 189, 248, 0.2);
-            border-radius: 12px;
-            padding: 40px;
+            border-radius: clamp(8px, 2vw, 16px);
+            padding: clamp(20px, 5vw, 45px);
             text-align: center;
-            max-width: 500px;
-            width: 90%;
+            max-width: min(500px, 92vw);
+            width: 92%;
             box-shadow: 0 0 40px rgba(56, 189, 248, 0.1), inset 0 0 20px rgba(56, 189, 248, 0.05);
             position: relative;
             transition: opacity 0.3s ease, transform 0.3s ease;
         }
         .portal-card::before {
-            content: ""; position: absolute; top: -1px; left: -1px; width: 20px; height: 20px; border-top: 3px solid #38bdf8; border-left: 3px solid #38bdf8; border-top-left-radius: 4px;
+            content: ""; 
+            position: absolute; 
+            top: -1px; 
+            left: -1px; 
+            width: clamp(14px, 3vw, 20px); 
+            height: clamp(14px, 3vw, 20px); 
+            border-top: clamp(2px, 0.4vw, 3px) solid #38bdf8; 
+            border-left: clamp(2px, 0.4vw, 3px) solid #38bdf8; 
+            border-top-left-radius: clamp(3px, 0.6vw, 6px);
         }
         .portal-card::after {
-            content: ""; position: absolute; bottom: -1px; right: -1px; width: 20px; height: 20px; border-bottom: 3px solid #38bdf8; border-right: 3px solid #38bdf8; border-bottom-right-radius: 4px;
+            content: ""; 
+            position: absolute; 
+            bottom: -1px; 
+            right: -1px; 
+            width: clamp(14px, 3vw, 20px); 
+            height: clamp(14px, 3vw, 20px); 
+            border-bottom: clamp(2px, 0.4vw, 3px) solid #38bdf8; 
+            border-right: clamp(2px, 0.4vw, 3px) solid #38bdf8; 
+            border-bottom-right-radius: clamp(3px, 0.6vw, 6px);
         }
-        /* คลาสสำหรับซ่อน (ใช้คู่กับ JS) */
         .portal-card.hidden {
             display: none !important;
         }
 
         .title {
-            font-size: 24px;
+            font-size: clamp(18px, 5vw, 30px);
             font-weight: bold;
-            letter-spacing: 4px;
+            letter-spacing: clamp(2px, 0.6vw, 6px);
             text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
-            margin-bottom: 10px;
+            margin-bottom: clamp(6px, 1.5vw, 12px);
+            word-break: break-word;
         }
         .subtitle {
-            font-size: 11px;
+            font-size: clamp(9px, 2vw, 13px);
             color: #475569;
-            letter-spacing: 2px;
+            letter-spacing: clamp(1px, 0.3vw, 3px);
             text-transform: uppercase;
-            margin-bottom: 30px;
+            margin-bottom: clamp(16px, 4vw, 32px);
         }
         .launch-btn {
             background: rgba(168, 85, 247, 0.15);
             border: 1px solid rgba(168, 85, 247, 0.5);
             color: #e9d5ff;
             font-family: 'Courier New', monospace;
-            font-size: 13px;
+            font-size: clamp(11px, 2.5vw, 15px);
             font-weight: bold;
-            letter-spacing: 2px;
-            padding: 15px 30px;
+            letter-spacing: clamp(1px, 0.3vw, 3px);
+            padding: clamp(12px, 3vw, 18px) clamp(20px, 5vw, 36px);
             cursor: pointer;
-            border-radius: 6px;
+            border-radius: clamp(4px, 0.8vw, 8px);
             text-shadow: 0 0 8px rgba(168, 85, 247, 0.6);
             box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            touch-action: manipulation;
+            width: 100%;
+            max-width: 320px;
         }
         .launch-btn:hover {
             background: rgba(168, 85, 247, 0.35);
@@ -127,67 +151,60 @@
             color: #fff;
             transform: scale(1.05);
         }
+        .launch-btn:active {
+            transform: scale(0.97);
+        }
         .status-text {
-            font-size: 10px;
+            font-size: clamp(9px, 2vw, 12px);
             color: #10b981;
-            margin-top: 25px;
-            letter-spacing: 1px;
+            margin-top: clamp(16px, 4vw, 28px);
+            letter-spacing: clamp(1px, 0.2vw, 2px);
         }
 
-        /* Responsive สำหรับมือถือ 6.0 นิ้ว */
-        @media (max-width: 600px) {
-            .portal-card {
-                padding: 30px 20px;
-            }
-            .title {
-                font-size: 19px;
-                letter-spacing: 2px;
-            }
-            .subtitle {
-                font-size: 9px;
-                margin-bottom: 25px;
-            }
-            .launch-btn {
-                padding: 12px 22px;
-                font-size: 11px;
-            }
-            .toggle-btn {
-                top: 12px;
-                right: 12px;
-                width: 36px;
-                height: 36px;
-                font-size: 15px;
-            }
+        @media (max-width: 480px) {
+            body { padding: 12px; }
+            .portal-card { padding: 20px 16px; width: 96%; }
+            .title { font-size: 18px; letter-spacing: 2px; }
+            .subtitle { font-size: 9px; margin-bottom: 20px; }
+            .launch-btn { font-size: 12px; padding: 14px 20px; }
+            .toggle-btn { width: 38px; height: 38px; font-size: 16px; top: 10px; right: 10px; }
+        }
+
+        @media (max-width: 380px) {
+            .portal-card { padding: 16px 12px; }
+            .title { font-size: 16px; letter-spacing: 1px; }
+            .subtitle { font-size: 8px; margin-bottom: 16px; }
+            .launch-btn { font-size: 11px; padding: 12px 16px; letter-spacing: 1px; }
+            .toggle-btn { width: 34px; height: 34px; font-size: 14px; top: 8px; right: 8px; }
+        }
+
+        @media (max-height: 500px) and (orientation: landscape) {
+            body { padding: 8px 16px; align-items: flex-start; padding-top: 20px; }
+            .portal-card { padding: 16px 24px; max-width: 70vw; }
+            .title { font-size: clamp(16px, 3.5vh, 22px); margin-bottom: 4px; }
+            .subtitle { font-size: clamp(8px, 1.8vh, 10px); margin-bottom: 12px; }
+            .launch-btn { padding: 8px 20px; font-size: clamp(10px, 2vh, 13px); max-width: 280px; }
+            .status-text { margin-top: 10px; font-size: clamp(8px, 1.5vh, 10px); }
+            .toggle-btn { width: 32px; height: 32px; font-size: 14px; top: 6px; right: 6px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- ===== ปุ่มเล็ก ๆ มุมบนขวา ===== -->
     <button class="toggle-btn" id="togglePortalBtn" title="เปิด/ปิด Portal">
         <span class="icon-cmd">⌘</span>
     </button>
 
-    <!-- ===== Portal Card ===== -->
     <div class="portal-card hidden" id="portalCard">
         <div class="title">CHOD COGNITIVE SYSTEM</div>
         <div class="subtitle">Central Command & 6-Relay Deck</div>
-        
-        <button class="launch-btn" id="launchBtn">
-            LAUNCH COGNITIVE MONITOR
-        </button>
-        
+        <button class="launch-btn" id="launchBtn">LAUNCH COGNITIVE MONITOR</button>
         <div class="status-text">● SECURE SYNC LINK DETECTED</div>
     </div>
 
     <script>
-        // ----- ระบบ ChodBrain (เดิม) -----
         window.ChodBrain = {
-            neurotransmitters: {
-                dopamine: 0.5,
-                serotonin: 0.6,
-                adrenaline: 0.3
-            },
+            neurotransmitters: { dopamine: 0.5, serotonin: 0.6, adrenaline: 0.3 },
             frustrationScore: 0.2
         };
 
@@ -201,7 +218,6 @@
             }
         }, 300);
 
-        // ปุ่ม LAUNCH (เดิม)
         document.getElementById("launchBtn").addEventListener("click", () => {
             if (window.ChodBrainMonitor && typeof window.ChodBrainMonitor.show === "function") {
                 window.ChodBrainMonitor.show();
@@ -210,24 +226,18 @@
             }
         });
 
-        // ----- ปุ่ม toggle แสดง/ซ่อน Portal Card (มุมบนขวา) -----
         document.getElementById("togglePortalBtn").addEventListener("click", function() {
-            const card = document.getElementById("portalCard");
-            card.classList.toggle("hidden");
+            document.getElementById("portalCard").classList.toggle("hidden");
         });
     </script>
 
-    <!-- สคริปต์ภายนอก (โหลดเหมือนเดิม) -->
     <script src="AIMr-Chod.js"></script>
     <script src="visualizer-globals.js"></script>
     <script src="visualizer-ui.js"></script>
     <script src="visualizer-voice.js"></script>
     <script src="visualizer-brain-physics.js"></script>
-           <!-- แทรกโมดูลวิเคราะห์เสียงคำสั่งขั้นสูงตัวนี้ไว้บรรทัดล่างสุด -->
     <script src="Advanced-Voice-Commands.js"></script>
-             <!-- แทรกโมดูลเชื่อมต่อ Telegram ตรงจุดนี้ -->
     <script src="telegram.js"></script>
- 
 
 </body>
 </html>

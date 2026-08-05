@@ -7,12 +7,13 @@
 
 body {
     min-height: 100vh;
+    min-height: 100dvh;
     background: radial-gradient(circle at 20% 30%, #0a0f1e, #03050b);
     font-family: 'Segoe UI', 'Orbitron', 'Courier New', monospace;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 16px;
+    padding: clamp(8px, 2vw, 16px);
     position: relative;
     overflow-x: hidden;
 }
@@ -39,22 +40,23 @@ body::before {
     max-width: 1400px;
     width: 100%;
     z-index: 2;
+    padding: clamp(4px, 1vw, 8px);
 }
 
 .hud-header {
     text-align: center;
-    margin-bottom: 24px;
+    margin-bottom: clamp(12px, 3vh, 24px);
     position: relative;
 }
 
 .title {
-    font-size: 2.2rem;
+    font-size: clamp(1.4rem, 5vw, 2.2rem);
     font-weight: 700;
     background: linear-gradient(135deg, #ff0000, #ff4444, #ff0000);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    letter-spacing: 3px;
+    letter-spacing: clamp(2px, 0.5vw, 3px);
     text-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
     animation: pulseRed 2s infinite;
 }
@@ -66,9 +68,9 @@ body::before {
 
 .subtitle {
     color: #ff8888;
-    font-size: 0.7rem;
-    letter-spacing: 2px;
-    margin-top: 6px;
+    font-size: clamp(0.5rem, 1.5vw, 0.7rem);
+    letter-spacing: clamp(1px, 0.3vw, 2px);
+    margin-top: clamp(4px, 1vh, 6px);
     opacity: 0.9;
     word-break: break-word;
 }
@@ -76,32 +78,34 @@ body::before {
 .version-badge {
     display: inline-block;
     background: rgba(255, 68, 68, 0.3);
-    padding: 2px 8px;
+    padding: clamp(2px, 0.4vw, 4px) clamp(6px, 1.5vw, 10px);
     border-radius: 20px;
-    font-size: 0.6rem;
+    font-size: clamp(0.5rem, 1.2vw, 0.7rem);
     color: #ff8888;
-    margin-top: 8px;
+    margin-top: clamp(4px, 1vh, 8px);
 }
 
 .connection-panel {
     background: rgba(10, 20, 30, 0.75);
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(0, 255, 255, 0.4);
-    border-radius: 24px;
-    padding: 16px;
-    margin-bottom: 20px;
+    border-radius: clamp(16px, 3vw, 24px);
+    padding: clamp(10px, 2vw, 16px);
+    margin-bottom: clamp(12px, 2vh, 20px);
 }
 
 .config-input {
     background: rgba(0, 30, 40, 0.8);
     border: 1px solid #0ff;
     color: #0ff;
-    padding: 10px 12px;
-    border-radius: 12px;
-    margin: 5px 0;
+    padding: clamp(8px, 1.5vw, 12px) clamp(10px, 2vw, 14px);
+    border-radius: clamp(8px, 1.5vw, 12px);
+    margin: clamp(3px, 0.5vw, 6px) 0;
     font-family: monospace;
     width: 100%;
-    font-size: 0.9rem;
+    font-size: clamp(0.7rem, 2vw, 0.9rem);
+    min-height: clamp(36px, 5vh, 44px);
 }
 
 .config-input:focus {
@@ -113,14 +117,15 @@ body::before {
     background: #0ff;
     color: #000;
     border: none;
-    padding: 10px 20px;
+    padding: clamp(8px, 1.5vw, 12px) clamp(16px, 3vw, 24px);
     border-radius: 30px;
     cursor: pointer;
     font-weight: bold;
-    margin-top: 10px;
+    margin-top: clamp(6px, 1vh, 10px);
     width: 100%;
-    font-size: 0.9rem;
+    font-size: clamp(0.7rem, 2vw, 0.9rem);
     transition: all 0.2s;
+    min-height: clamp(36px, 5vh, 44px);
 }
 
 .connect-btn:active {
@@ -128,15 +133,15 @@ body::before {
 }
 
 .relay-url-table {
-    margin-top: 12px;
+    margin-top: clamp(8px, 1.5vw, 12px);
     border-collapse: collapse;
     width: 100%;
-    font-size: 0.7rem;
+    font-size: clamp(0.6rem, 1.5vw, 0.8rem);
 }
 
 .relay-url-table th, .relay-url-table td {
     border: 1px solid rgba(0, 255, 255, 0.3);
-    padding: 8px;
+    padding: clamp(4px, 1vw, 8px);
     text-align: left;
     color: #0ff;
     vertical-align: middle;
@@ -150,52 +155,57 @@ body::before {
     background: rgba(0, 30, 40, 0.8);
     border: 1px solid #0ff;
     color: #0ff;
-    padding: 6px 8px;
+    padding: clamp(4px, 0.8vw, 6px) clamp(6px, 1vw, 8px);
     border-radius: 8px;
     font-family: monospace;
     width: 100%;
-    font-size: 0.7rem;
+    font-size: clamp(0.55rem, 1.2vw, 0.7rem);
+    min-height: clamp(28px, 4vh, 36px);
 }
 
 .delay-input {
-    width: 80px;
+    width: clamp(60px, 15vw, 80px);
     background: rgba(0, 30, 40, 0.8);
     border: 1px solid #0ff;
     color: #0ff;
-    padding: 4px 6px;
+    padding: clamp(2px, 0.5vw, 4px) clamp(4px, 0.8vw, 6px);
     border-radius: 8px;
     text-align: center;
+    min-height: clamp(28px, 4vh, 34px);
+    font-size: clamp(0.55rem, 1.2vw, 0.7rem);
 }
 
 .ai-status {
     background: rgba(10, 20, 30, 0.7);
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(0, 255, 255, 0.4);
-    border-radius: 20px;
-    padding: 12px 20px;
-    margin-bottom: 20px;
+    border-radius: clamp(16px, 3vw, 20px);
+    padding: clamp(8px, 1.5vw, 12px) clamp(12px, 2vw, 20px);
+    margin-bottom: clamp(12px, 2vh, 20px);
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: clamp(6px, 1.5vw, 12px);
 }
 
 .status-item {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: clamp(4px, 1vw, 8px);
     font-family: monospace;
-    font-size: 0.8rem;
+    font-size: clamp(0.6rem, 1.5vw, 0.8rem);
 }
 
 .status-led {
-    width: 10px;
-    height: 10px;
+    width: clamp(8px, 1.5vw, 10px);
+    height: clamp(8px, 1.5vw, 10px);
     border-radius: 50%;
     background: #555;
     box-shadow: 0 0 8px #555;
     animation: none;
     transition: all 0.3s ease;
+    flex-shrink: 0;
 }
 
 .status-led.connected {
@@ -212,27 +222,29 @@ body::before {
 .status-text {
     color: #0ff;
     font-weight: bold;
-    font-size: 0.75rem;
+    font-size: clamp(0.6rem, 1.5vw, 0.75rem);
 }
 
 .relay-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-    margin-bottom: 30px;
+    grid-template-columns: repeat(auto-fit, minmax(clamp(140px, 30vw, 180px), 1fr));
+    gap: clamp(10px, 2vw, 16px);
+    margin-bottom: clamp(20px, 4vh, 30px);
 }
 
 .relay-card {
     background: rgba(0, 20, 30, 0.7);
     backdrop-filter: blur(10px);
-    border-radius: 24px;
-    padding: 16px 12px;
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: clamp(16px, 3vw, 24px);
+    padding: clamp(10px, 2vw, 16px) clamp(8px, 1.5vw, 12px);
     text-align: center;
     border: 1px solid rgba(0, 255, 255, 0.3);
     transition: all 0.2s ease;
     position: relative;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .relay-card.active {
@@ -246,9 +258,9 @@ body::before {
 }
 
 .relay-icon {
-    width: 70px;
-    height: 70px;
-    margin: 0 auto 10px;
+    width: clamp(45px, 12vw, 70px);
+    height: clamp(45px, 12vw, 70px);
+    margin: 0 auto clamp(6px, 1.5vw, 10px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -273,7 +285,7 @@ body::before {
 }
 
 .relay-number {
-    font-size: 1rem;
+    font-size: clamp(0.7rem, 1.8vw, 1rem);
     font-weight: bold;
     color: #0ff;
     text-shadow: 0 0 6px #0ff;
@@ -281,27 +293,27 @@ body::before {
 }
 
 .relay-name {
-    font-size: 1rem;
+    font-size: clamp(0.7rem, 1.8vw, 1rem);
     color: #b0f0ff;
-    margin: 8px 0;
+    margin: clamp(4px, 1vw, 8px) 0;
     font-weight: bold;
     word-break: break-word;
 }
 
 .relay-label {
-    font-size: 0.7rem;
+    font-size: clamp(0.55rem, 1.2vw, 0.7rem);
     color: #6c9;
-    margin: 4px 0;
+    margin: clamp(2px, 0.5vw, 4px) 0;
 }
 
 .relay-state {
-    font-size: 0.9rem;
-    margin: 8px 0 0;
-    padding: 5px;
+    font-size: clamp(0.7rem, 1.8vw, 0.9rem);
+    margin: clamp(4px, 1vw, 8px) 0 0;
+    padding: clamp(3px, 0.6vw, 5px);
     border-radius: 30px;
     background: rgba(0,0,0,0.5);
     display: inline-block;
-    width: 80px;
+    width: clamp(60px, 18vw, 80px);
     font-weight: bold;
     transition: all 0.2s;
 }
@@ -321,15 +333,16 @@ body::before {
 }
 
 .delay-control {
-    margin-top: 8px;
+    margin-top: clamp(4px, 1vw, 8px);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    font-size: 0.65rem;
+    gap: clamp(4px, 0.8vw, 6px);
+    font-size: clamp(0.55rem, 1.2vw, 0.65rem);
     background: rgba(0,0,0,0.3);
-    padding: 4px 8px;
+    padding: clamp(2px, 0.5vw, 4px) clamp(6px, 1vw, 8px);
     border-radius: 20px;
+    flex-wrap: wrap;
 }
 
 .delay-control label {
@@ -337,32 +350,34 @@ body::before {
 }
 
 .delay-control input {
-    width: 50px;
+    width: clamp(40px, 12vw, 50px);
     background: rgba(0, 30, 40, 0.8);
     border: 1px solid #0ff;
     color: #0ff;
-    padding: 2px 4px;
+    padding: clamp(2px, 0.4vw, 4px);
     border-radius: 8px;
     text-align: center;
-    font-size: 0.65rem;
+    font-size: clamp(0.55rem, 1.2vw, 0.65rem);
+    min-height: clamp(24px, 3.5vh, 30px);
 }
 
 .edit-name-btn {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: clamp(4px, 1vw, 8px);
+    right: clamp(4px, 1vw, 8px);
     background: rgba(0, 255, 255, 0.2);
     border: 1px solid #0ff;
     color: #0ff;
     cursor: pointer;
-    padding: 4px 8px;
+    padding: clamp(2px, 0.5vw, 4px) clamp(6px, 1.5vw, 8px);
     border-radius: 20px;
-    font-size: 0.65rem;
+    font-size: clamp(0.5rem, 1.2vw, 0.65rem);
     transition: all 0.2s;
     display: flex;
     align-items: center;
     gap: 4px;
     z-index: 10;
+    touch-action: manipulation;
 }
 
 .edit-name-btn:active {
@@ -374,34 +389,38 @@ body::before {
 .command-panel {
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(8px);
-    border-radius: 28px;
-    padding: 18px;
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: clamp(20px, 4vw, 28px);
+    padding: clamp(12px, 2.5vw, 18px);
     border: 1px solid rgba(0, 255, 255, 0.4);
-    margin-top: 16px;
+    margin-top: clamp(10px, 2vh, 16px);
 }
 
 .btn-group {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 12px;
-    margin: 15px 0;
+    gap: clamp(8px, 2vw, 12px);
+    margin: clamp(10px, 2vh, 15px) 0;
 }
 
 .hud-btn {
     background: rgba(0, 30, 40, 0.9);
     border: 1px solid #0ff;
     color: #0ff;
-    padding: 10px 18px;
+    padding: clamp(8px, 1.5vw, 12px) clamp(12px, 2.5vw, 18px);
     border-radius: 40px;
     font-weight: bold;
     cursor: pointer;
     transition: 0.15s;
     font-family: monospace;
-    font-size: 0.85rem;
+    font-size: clamp(0.65rem, 1.8vw, 0.85rem);
     backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     flex: 1;
-    min-width: 100px;
+    min-width: clamp(60px, 18vw, 100px);
+    touch-action: manipulation;
+    min-height: clamp(36px, 5vh, 44px);
 }
 
 .hud-btn:active {
@@ -424,16 +443,18 @@ body::before {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: clamp(6px, 1.5vw, 10px);
     background: #0a1a1f;
-    padding: 10px 20px;
+    padding: clamp(8px, 1.5vw, 12px) clamp(14px, 3vw, 20px);
     border-radius: 50px;
     cursor: pointer;
     transition: all 0.2s;
     border: 1px solid #0ff;
     width: 100%;
-    max-width: 320px;
-    margin: 10px auto 0;
+    max-width: clamp(240px, 60vw, 320px);
+    margin: clamp(6px, 1.5vw, 10px) auto 0;
+    touch-action: manipulation;
+    min-height: clamp(40px, 5vh, 48px);
 }
 
 .voice-badge.listening {
@@ -447,15 +468,15 @@ body::before {
 }
 
 #voiceHint {
-    font-size: 0.7rem;
+    font-size: clamp(0.55rem, 1.5vw, 0.7rem);
     text-align: center;
     word-break: break-word;
 }
 
 .note-text {
-    font-size: 0.65rem;
+    font-size: clamp(0.5rem, 1.2vw, 0.65rem);
     color: #6c9;
-    margin-top: 5px;
+    margin-top: clamp(3px, 0.5vw, 5px);
     text-align: center;
 }
 
@@ -468,9 +489,11 @@ body::before {
     height: 100%;
     background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     z-index: 1000;
     justify-content: center;
     align-items: center;
+    padding: 16px;
 }
 
 .modal.active {
@@ -480,8 +503,8 @@ body::before {
 .modal-content {
     background: rgba(10, 30, 40, 0.95);
     border: 2px solid #0ff;
-    border-radius: 28px;
-    padding: 24px;
+    border-radius: clamp(20px, 4vw, 28px);
+    padding: clamp(16px, 3vw, 24px);
     width: 90%;
     max-width: 400px;
     text-align: center;
@@ -489,35 +512,41 @@ body::before {
 
 .modal-content h3 {
     color: #0ff;
-    margin-bottom: 20px;
-    font-size: 1.3rem;
+    margin-bottom: clamp(12px, 2.5vw, 20px);
+    font-size: clamp(1rem, 3vw, 1.3rem);
 }
 
 .modal-input {
     background: rgba(0, 30, 40, 0.8);
     border: 1px solid #0ff;
     color: #0ff;
-    padding: 12px;
+    padding: clamp(10px, 2vw, 12px);
     border-radius: 12px;
     width: 100%;
-    font-size: 1rem;
-    margin-bottom: 20px;
+    font-size: clamp(0.8rem, 2vw, 1rem);
+    margin-bottom: clamp(12px, 2.5vw, 20px);
     text-align: center;
+    min-height: clamp(40px, 5vh, 48px);
 }
 
 .modal-buttons {
     display: flex;
-    gap: 12px;
+    gap: clamp(8px, 2vw, 12px);
     justify-content: center;
+    flex-wrap: wrap;
 }
 
 .modal-btn {
-    padding: 10px 20px;
+    padding: clamp(8px, 1.5vw, 12px) clamp(14px, 3vw, 20px);
     border-radius: 30px;
     border: none;
     cursor: pointer;
     font-weight: bold;
     flex: 1;
+    min-width: clamp(60px, 20vw, 80px);
+    min-height: clamp(36px, 5vh, 44px);
+    touch-action: manipulation;
+    font-size: clamp(0.7rem, 1.8vw, 0.9rem);
 }
 
 .modal-btn.save {
@@ -541,10 +570,10 @@ body::before {
 
 .footer {
     text-align: center;
-    margin-top: 20px;
-    padding: 16px;
+    margin-top: clamp(12px, 2vh, 20px);
+    padding: clamp(10px, 2vw, 16px);
     color: #6c9;
-    font-size: 0.65rem;
+    font-size: clamp(0.5rem, 1.2vw, 0.65rem);
     border-top: 1px solid rgba(0, 255, 255, 0.2);
 }
 
@@ -553,33 +582,515 @@ body::before {
     50% { opacity: 0.5; transform: scale(1.2); }
 }
 
+/* ===== Responsive Mobile ===== */
+
+/* มือถือขนาดกลางและเล็ก */
 @media (max-width: 550px) {
-    .title { font-size: 1.6rem; }
-    .relay-card { padding: 12px 8px; }
-    .relay-icon { width: 55px; height: 55px; }
-    .relay-name { font-size: 0.85rem; }
-    .relay-label { font-size: 0.6rem; }
-    .hud-btn { padding: 8px 12px; font-size: 0.75rem; min-width: 80px; }
-    .status-text { font-size: 0.65rem; }
-    .edit-name-btn { font-size: 0.55rem; padding: 3px 6px; }
-    .relay-state { width: 70px; font-size: 0.8rem; }
+    .title { 
+        font-size: clamp(1.2rem, 5vw, 1.6rem); 
+    }
+    .relay-card { 
+        padding: clamp(8px, 2vw, 12px) clamp(6px, 1.5vw, 8px); 
+    }
+    .relay-icon { 
+        width: clamp(40px, 12vw, 55px); 
+        height: clamp(40px, 12vw, 55px); 
+    }
+    .relay-name { 
+        font-size: clamp(0.65rem, 2vw, 0.85rem); 
+    }
+    .relay-label { 
+        font-size: clamp(0.5rem, 1.2vw, 0.6rem); 
+    }
+    .hud-btn { 
+        padding: clamp(6px, 1.5vw, 8px) clamp(8px, 2vw, 12px); 
+        font-size: clamp(0.6rem, 1.8vw, 0.75rem); 
+        min-width: clamp(50px, 20vw, 80px); 
+        min-height: clamp(32px, 5vh, 36px);
+    }
+    .status-text { 
+        font-size: clamp(0.5rem, 1.5vw, 0.65rem); 
+    }
+    .edit-name-btn { 
+        font-size: clamp(0.45rem, 1.2vw, 0.55rem); 
+        padding: clamp(2px, 0.5vw, 3px) clamp(4px, 1vw, 6px); 
+    }
+    .relay-state { 
+        width: clamp(50px, 18vw, 70px); 
+        font-size: clamp(0.6rem, 1.8vw, 0.8rem); 
+    }
+    .config-input {
+        font-size: clamp(0.65rem, 2vw, 0.8rem);
+        min-height: clamp(32px, 5vh, 38px);
+    }
+    .connect-btn {
+        font-size: clamp(0.65rem, 2vw, 0.8rem);
+        min-height: clamp(32px, 5vh, 38px);
+    }
+    .voice-badge {
+        min-height: clamp(36px, 5vh, 42px);
+        font-size: clamp(0.6rem, 1.8vw, 0.75rem);
+    }
+    .relay-grid {
+        grid-template-columns: repeat(auto-fit, minmax(clamp(120px, 30vw, 150px), 1fr));
+        gap: clamp(6px, 1.5vw, 10px);
+    }
+    .modal-content {
+        padding: clamp(12px, 3vw, 18px);
+        width: 95%;
+    }
+    .modal-btn {
+        min-height: clamp(32px, 5vh, 38px);
+        font-size: clamp(0.6rem, 1.8vw, 0.8rem);
+        padding: clamp(6px, 1.5vw, 10px) clamp(10px, 2.5vw, 16px);
+    }
+    .modal-input {
+        min-height: clamp(32px, 5vh, 38px);
+        font-size: clamp(0.7rem, 2vw, 0.9rem);
+    }
+    .ai-status {
+        padding: clamp(6px, 1.5vw, 10px) clamp(8px, 2vw, 14px);
+        gap: clamp(4px, 1vw, 8px);
+    }
+    .status-item {
+        font-size: clamp(0.5rem, 1.5vw, 0.7rem);
+    }
+    .command-panel {
+        padding: clamp(8px, 2vw, 12px);
+        border-radius: clamp(16px, 3vw, 20px);
+    }
+    .btn-group {
+        gap: clamp(4px, 1vw, 8px);
+    }
+    .relay-url-table {
+        font-size: clamp(0.5rem, 1.2vw, 0.65rem);
+    }
+    .relay-url-table th, .relay-url-table td {
+        padding: clamp(3px, 0.6vw, 6px);
+    }
+    .url-input-small {
+        font-size: clamp(0.5rem, 1.2vw, 0.6rem);
+        min-height: clamp(24px, 3.5vh, 30px);
+    }
+    .delay-input {
+        min-height: clamp(24px, 3.5vh, 30px);
+        font-size: clamp(0.5rem, 1.2vw, 0.6rem);
+    }
+    .delay-control {
+        font-size: clamp(0.5rem, 1.2vw, 0.6rem);
+    }
+    .toast-message {
+        font-size: clamp(0.6rem, 1.8vw, 0.75rem);
+        padding: clamp(6px, 1.5vw, 10px) clamp(12px, 3vw, 16px);
+        bottom: clamp(10px, 2vh, 16px);
+    }
+    body {
+        padding: clamp(6px, 1.5vw, 10px);
+    }
+}
+
+/* มือถือขนาดเล็กมาก (320px) */
+@media (max-width: 380px) {
+    .title {
+        font-size: clamp(1rem, 4.5vw, 1.2rem);
+        letter-spacing: 1px;
+    }
+    .subtitle {
+        font-size: clamp(0.4rem, 1.2vw, 0.5rem);
+    }
+    .relay-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(4px, 1vw, 6px);
+    }
+    .relay-card {
+        padding: clamp(6px, 1.5vw, 8px) clamp(4px, 1vw, 6px);
+        border-radius: clamp(12px, 2.5vw, 16px);
+    }
+    .relay-icon {
+        width: clamp(30px, 10vw, 40px);
+        height: clamp(30px, 10vw, 40px);
+    }
+    .relay-name {
+        font-size: clamp(0.55rem, 1.8vw, 0.65rem);
+        margin: 2px 0;
+    }
+    .relay-number {
+        font-size: clamp(0.55rem, 1.8vw, 0.65rem);
+    }
+    .relay-state {
+        width: clamp(40px, 18vw, 50px);
+        font-size: clamp(0.5rem, 1.5vw, 0.6rem);
+        padding: 2px 4px;
+    }
+    .hud-btn {
+        font-size: clamp(0.5rem, 1.5vw, 0.6rem);
+        padding: clamp(4px, 1vw, 6px) clamp(6px, 1.5vw, 8px);
+        min-width: clamp(40px, 18vw, 60px);
+        min-height: clamp(28px, 4vh, 32px);
+    }
+    .status-text {
+        font-size: clamp(0.4rem, 1.2vw, 0.55rem);
+    }
+    .status-led {
+        width: clamp(6px, 1.2vw, 8px);
+        height: clamp(6px, 1.2vw, 8px);
+    }
+    .edit-name-btn {
+        font-size: clamp(0.4rem, 1vw, 0.45rem);
+        padding: clamp(1px, 0.3vw, 2px) clamp(3px, 0.8vw, 4px);
+        top: clamp(2px, 0.5vw, 4px);
+        right: clamp(2px, 0.5vw, 4px);
+    }
+    .config-input {
+        font-size: clamp(0.55rem, 1.8vw, 0.65rem);
+        min-height: clamp(28px, 4vh, 32px);
+        padding: clamp(4px, 1vw, 6px) clamp(6px, 1.5vw, 8px);
+    }
+    .connect-btn {
+        font-size: clamp(0.55rem, 1.8vw, 0.65rem);
+        min-height: clamp(28px, 4vh, 32px);
+        padding: clamp(4px, 1vw, 6px) clamp(10px, 2.5vw, 14px);
+    }
+    .voice-badge {
+        min-height: clamp(30px, 4.5vh, 34px);
+        font-size: clamp(0.5rem, 1.5vw, 0.6rem);
+        padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px);
+    }
+    .modal-content {
+        padding: clamp(10px, 2.5vw, 14px);
+        border-radius: clamp(14px, 3vw, 18px);
+    }
+    .modal-content h3 {
+        font-size: clamp(0.8rem, 2.5vw, 1rem);
+        margin-bottom: clamp(8px, 2vw, 12px);
+    }
+    .modal-btn {
+        min-height: clamp(28px, 4vh, 32px);
+        font-size: clamp(0.5rem, 1.5vw, 0.65rem);
+        padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px);
+    }
+    .modal-input {
+        min-height: clamp(28px, 4vh, 32px);
+        font-size: clamp(0.6rem, 1.8vw, 0.7rem);
+        padding: clamp(6px, 1.5vw, 8px);
+    }
+    .delay-control input {
+        min-height: clamp(20px, 3vh, 24px);
+        font-size: clamp(0.45rem, 1.2vw, 0.55rem);
+        width: clamp(30px, 10vw, 40px);
+    }
+    .delay-control {
+        font-size: clamp(0.45rem, 1.2vw, 0.55rem);
+        padding: clamp(2px, 0.4vw, 3px) clamp(4px, 1vw, 6px);
+    }
+    .command-panel {
+        padding: clamp(6px, 1.5vw, 8px);
+        border-radius: clamp(12px, 2.5vw, 16px);
+    }
+    .btn-group {
+        gap: clamp(3px, 0.8vw, 5px);
+        margin: clamp(4px, 1vh, 8px) 0;
+    }
+    .toast-message {
+        font-size: clamp(0.5rem, 1.5vw, 0.6rem);
+        padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px);
+        bottom: clamp(6px, 1.5vh, 10px);
+        max-width: 95vw;
+    }
+    .url-input-small {
+        font-size: clamp(0.45rem, 1.2vw, 0.5rem);
+        min-height: clamp(20px, 3vh, 24px);
+        padding: clamp(2px, 0.5vw, 3px) clamp(4px, 1vw, 5px);
+    }
+    .relay-url-table {
+        font-size: clamp(0.4rem, 1vw, 0.5rem);
+    }
+    .relay-url-table th, .relay-url-table td {
+        padding: clamp(2px, 0.4vw, 4px);
+    }
+    .ai-status {
+        padding: clamp(4px, 1vw, 6px) clamp(6px, 1.5vw, 8px);
+        gap: clamp(3px, 0.8vw, 5px);
+        border-radius: clamp(12px, 2.5vw, 16px);
+    }
+    .status-item {
+        font-size: clamp(0.4rem, 1.2vw, 0.5rem);
+        gap: clamp(2px, 0.5vw, 4px);
+    }
+    body {
+        padding: clamp(4px, 1vw, 6px);
+    }
+    .container {
+        padding: clamp(2px, 0.5vw, 4px);
+    }
+    .hud-header {
+        margin-bottom: clamp(6px, 1.5vh, 10px);
+    }
+    .connection-panel {
+        padding: clamp(6px, 1.5vw, 8px);
+        border-radius: clamp(12px, 2.5vw, 16px);
+        margin-bottom: clamp(6px, 1.5vh, 10px);
+    }
+}
+
+/* แนวนอนบนมือถือ */
+@media (max-height: 500px) and (orientation: landscape) {
+    body {
+        padding: clamp(4px, 1vw, 8px);
+        align-items: flex-start;
+        padding-top: clamp(8px, 2vh, 16px);
+    }
+    .container {
+        max-width: 90vw;
+        padding: 0;
+    }
+    .hud-header {
+        margin-bottom: clamp(6px, 1.5vh, 10px);
+    }
+    .title {
+        font-size: clamp(1.2rem, 3.5vh, 1.8rem);
+    }
+    .subtitle {
+        font-size: clamp(0.4rem, 1.2vh, 0.6rem);
+        margin-top: 2px;
+    }
+    .relay-grid {
+        grid-template-columns: repeat(auto-fit, minmax(clamp(100px, 20vw, 140px), 1fr));
+        gap: clamp(4px, 1vw, 8px);
+        margin-bottom: clamp(8px, 2vh, 12px);
+    }
+    .relay-card {
+        padding: clamp(4px, 1vw, 8px) clamp(4px, 1vw, 6px);
+        border-radius: clamp(10px, 2vw, 14px);
+    }
+    .relay-icon {
+        width: clamp(30px, 8vw, 45px);
+        height: clamp(30px, 8vw, 45px);
+        margin-bottom: clamp(2px, 0.5vh, 4px);
+    }
+    .relay-name {
+        font-size: clamp(0.5rem, 1.5vw, 0.65rem);
+        margin: 2px 0;
+    }
+    .relay-number {
+        font-size: clamp(0.5rem, 1.5vw, 0.65rem);
+    }
+    .relay-state {
+        width: clamp(40px, 12vw, 55px);
+        font-size: clamp(0.5rem, 1.5vw, 0.65rem);
+        padding: 2px 4px;
+        margin-top: 2px;
+    }
+    .relay-label {
+        font-size: clamp(0.4rem, 1vw, 0.5rem);
+        margin: 1px 0;
+    }
+    .edit-name-btn {
+        font-size: clamp(0.35rem, 1vw, 0.45rem);
+        padding: 1px 4px;
+        top: 2px;
+        right: 2px;
+    }
+    .ai-status {
+        padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px);
+        margin-bottom: clamp(6px, 1.5vh, 10px);
+        gap: clamp(4px, 1vw, 8px);
+        border-radius: clamp(12px, 2vw, 16px);
+    }
+    .status-item {
+        font-size: clamp(0.4rem, 1.2vw, 0.55rem);
+        gap: clamp(2px, 0.5vw, 4px);
+    }
+    .status-led {
+        width: clamp(5px, 1.2vw, 7px);
+        height: clamp(5px, 1.2vw, 7px);
+    }
+    .status-text {
+        font-size: clamp(0.4rem, 1.2vw, 0.55rem);
+    }
+    .command-panel {
+        padding: clamp(6px, 1.5vw, 8px);
+        border-radius: clamp(14px, 2.5vw, 18px);
+        margin-top: clamp(4px, 1vh, 8px);
+    }
+    .btn-group {
+        gap: clamp(4px, 1vw, 8px);
+        margin: clamp(4px, 1vh, 8px) 0;
+    }
+    .hud-btn {
+        font-size: clamp(0.5rem, 1.5vw, 0.65rem);
+        padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px);
+        min-width: clamp(40px, 15vw, 70px);
+        min-height: clamp(24px, 4vh, 32px);
+    }
+    .voice-badge {
+        padding: clamp(4px, 1vw, 6px) clamp(10px, 2vw, 14px);
+        font-size: clamp(0.5rem, 1.5vw, 0.65rem);
+        min-height: clamp(28px, 4vh, 34px);
+        max-width: clamp(180px, 40vw, 240px);
+    }
+    .config-input {
+        font-size: clamp(0.55rem, 1.5vw, 0.7rem);
+        min-height: clamp(28px, 4vh, 32px);
+        padding: clamp(4px, 1vw, 6px) clamp(6px, 1.5vw, 8px);
+        margin: 2px 0;
+    }
+    .connect-btn {
+        font-size: clamp(0.55rem, 1.5vw, 0.7rem);
+        min-height: clamp(28px, 4vh, 32px);
+        padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px);
+        margin-top: 4px;
+    }
+    .connection-panel {
+        padding: clamp(6px, 1.5vw, 8px);
+        margin-bottom: clamp(6px, 1.5vh, 10px);
+        border-radius: clamp(12px, 2vw, 16px);
+    }
+    .log-panel, .hud-console-logs {
+        height: clamp(40px, 10vh, 60px) !important;
+        max-height: clamp(40px, 10vh, 60px) !important;
+        font-size: clamp(0.45rem, 1.2vw, 0.6rem);
+    }
+    .modal-content {
+        padding: clamp(10px, 2vw, 14px);
+        max-width: 320px;
+    }
+    .modal-content h3 {
+        font-size: clamp(0.8rem, 2.5vw, 1rem);
+        margin-bottom: clamp(6px, 1.5vw, 10px);
+    }
+    .modal-input {
+        font-size: clamp(0.6rem, 1.8vw, 0.75rem);
+        min-height: clamp(28px, 4vh, 32px);
+        padding: clamp(4px, 1vw, 6px) clamp(6px, 1.5vw, 8px);
+        margin-bottom: clamp(6px, 1.5vw, 10px);
+    }
+    .modal-btn {
+        font-size: clamp(0.5rem, 1.5vw, 0.65rem);
+        min-height: clamp(28px, 4vh, 32px);
+        padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px);
+    }
+    .footer {
+        margin-top: clamp(6px, 1.5vh, 10px);
+        padding: clamp(6px, 1.5vw, 8px);
+        font-size: clamp(0.4rem, 1vw, 0.5rem);
+    }
+    .toast-message {
+        font-size: clamp(0.5rem, 1.5vw, 0.6rem);
+        padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px);
+        bottom: clamp(6px, 1.5vh, 10px);
+    }
+    .relay-url-table {
+        font-size: clamp(0.4rem, 1vw, 0.5rem);
+    }
+    .relay-url-table th, .relay-url-table td {
+        padding: clamp(2px, 0.5vw, 4px);
+    }
+    .url-input-small {
+        font-size: clamp(0.4rem, 1vw, 0.5rem);
+        min-height: clamp(20px, 3vh, 24px);
+        padding: clamp(2px, 0.4vw, 3px) clamp(4px, 0.8vw, 5px);
+    }
+    .delay-control {
+        font-size: clamp(0.4rem, 1vw, 0.5rem);
+        padding: 2px 4px;
+    }
+    .delay-control input {
+        width: clamp(30px, 8vw, 40px);
+        font-size: clamp(0.4rem, 1vw, 0.5rem);
+        min-height: clamp(18px, 2.5vh, 22px);
+    }
+    .edit-name-btn {
+        font-size: clamp(0.3rem, 0.8vw, 0.4rem);
+        padding: 1px 3px;
+    }
+}
+
+/* จอภาพขนาดใหญ่ (Desktop) */
+@media (min-width: 1400px) {
+    .container {
+        max-width: 1400px;
+        padding: 0 24px;
+    }
+    .title {
+        font-size: 2.6rem;
+        letter-spacing: 4px;
+    }
+    .relay-grid {
+        gap: 20px;
+    }
+    .relay-card {
+        padding: 20px 16px;
+        border-radius: 28px;
+    }
+    .relay-icon {
+        width: 80px;
+        height: 80px;
+    }
+    .relay-name {
+        font-size: 1.1rem;
+    }
+    .hud-btn {
+        font-size: 1rem;
+        padding: 12px 24px;
+        min-width: 120px;
+    }
+    .config-input {
+        font-size: 1rem;
+        padding: 12px 16px;
+    }
+    .connect-btn {
+        font-size: 1rem;
+        padding: 14px 28px;
+    }
+}
+
+/* ป้องกันการเลื่อนหน้าเกิน */
+html {
+    overflow-x: hidden;
+}
+
+/* ซ่อน scrollbar สำหรับ Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 255, 255, 0.3) transparent;
+}
+
+/* ซ่อน scrollbar สำหรับ Chrome/Safari */
+*::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 255, 255, 0.5);
 }
 
 .toast-message {
     position: fixed;
-    bottom: 20px;
+    bottom: clamp(10px, 2vh, 20px);
     left: 50%;
     transform: translateX(-50%);
     background: rgba(0, 255, 255, 0.2);
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid #0ff;
     color: #0ff;
-    padding: 10px 20px;
+    padding: clamp(6px, 1.5vw, 10px) clamp(12px, 3vw, 20px);
     border-radius: 40px;
     font-family: monospace;
     font-weight: bold;
     z-index: 1010;
-    font-size: 0.8rem;
+    font-size: clamp(0.6rem, 1.8vw, 0.8rem);
     max-width: 90vw;
     text-align: center;
     pointer-events: none;
@@ -589,24 +1100,35 @@ body::before {
     overflow-x: auto;
     display: block;
     width: 100%;
+    -webkit-overflow-scrolling: touch;
 }
 
 .relay-color {
-    width: 12px;
-    height: 12px;
+    width: clamp(8px, 1.5vw, 12px);
+    height: clamp(8px, 1.5vw, 12px);
     border-radius: 50%;
     display: inline-block;
-    margin-right: 6px;
+    margin-right: clamp(4px, 0.8vw, 6px);
 }
 
 .voice-status {
-    font-size: 0.7rem;
+    font-size: clamp(0.55rem, 1.5vw, 0.7rem);
     color: #ff0;
-    margin-top: 8px;
+    margin-top: clamp(4px, 1vh, 8px);
     text-align: center;
 }
 
 /* Hide CHOD Portal Card */
 .portal-card {
     display: none !important;
+}
+
+/* ปรับปรุงการแสดงผลบนจอที่มี notch */
+@supports (padding: max(0px)) {
+    body {
+        padding-left: max(16px, env(safe-area-inset-left));
+        padding-right: max(16px, env(safe-area-inset-right));
+        padding-top: max(16px, env(safe-area-inset-top));
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
 }

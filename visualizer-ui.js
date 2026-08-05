@@ -24,7 +24,7 @@ function playSciFiBeep(freq = 800, type = 'sine', duration = 0.1) {
         oscillator.type = type;
         oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
 
-        gainNode.gain.setValueAtTime(0.04, audioCtx.currentTime); // รักษาระดับความปลอดภัยของเสียง
+        gainNode.gain.setValueAtTime(0.04, audioCtx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
 
         oscillator.connect(gainNode);
@@ -52,11 +52,12 @@ function initCommandDeck() {
             left: 0;
             width: 100vw;
             height: 100vh;
+            height: 100dvh;
             background: radial-gradient(circle at center, rgba(3, 8, 18, 0.99) 0%, rgba(1, 2, 4, 1) 100%);
             z-index: 999999;
             display: flex;
             flex-direction: column;
-            padding: 20px;
+            padding: clamp(10px, 2vh, 20px);
             box-sizing: border-box;
             user-select: none;
             font-family: 'Segoe UI', 'Courier New', Courier, monospace;
@@ -122,8 +123,8 @@ function initCommandDeck() {
             backdrop-filter: blur(12px) saturate(180%);
             -webkit-backdrop-filter: blur(12px) saturate(180%);
             border: 1px solid rgba(56, 189, 248, 0.18);
-            border-radius: 12px;
-            padding: 16px;
+            border-radius: clamp(8px, 1.5vw, 12px);
+            padding: clamp(8px, 1.5vw, 16px);
             display: flex;
             flex-direction: column;
             position: relative;
@@ -139,10 +140,10 @@ function initCommandDeck() {
         }
         .hud-panel-title {
             color: var(--hud-text-glow, #38bdf8);
-            font-size: 10px;
+            font-size: clamp(8px, 1.8vw, 10px);
             font-weight: bold;
             letter-spacing: 1.5px;
-            margin-bottom: 12px;
+            margin-bottom: clamp(6px, 1.2vw, 12px);
             border-bottom: 1px solid rgba(56, 189, 248, 0.15);
             padding-bottom: 6px;
             text-shadow: 0 0 5px rgba(56, 189, 248, 0.4);
@@ -158,7 +159,7 @@ function initCommandDeck() {
         }
         .hud-canvas-container {
             width: 100%;
-            height: 48vh;
+            height: clamp(30vh, 40vw, 48vh);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -198,26 +199,26 @@ function initCommandDeck() {
         #chod-plexus-canvas {
             width: 100%;
             height: 100%;
-            max-width: 580px;
-            max-height: 580px;
+            max-width: clamp(280px, 70vw, 580px);
+            max-height: clamp(280px, 70vw, 580px);
             z-index: 2;
             filter: drop-shadow(0 0 25px var(--brain-glow-color, rgba(56, 189, 248, 0.3)));
         }
 
         /* ตกแต่งแอนิเมชันเตาปฏิกรณ์พลังงานคอร์ (Voice Arc Reactor Core Animation) */
         .arc-reactor-container {
-            width: 130px;
-            height: 130px;
+            width: clamp(80px, 20vw, 130px);
+            height: clamp(80px, 20vw, 130px);
             position: relative;
-            margin: 15px auto;
+            margin: clamp(8px, 2vw, 15px) auto;
             display: flex;
             justify-content: center;
             align-items: center;
         }
         .arc-reactor-outer {
             position: absolute;
-            width: 120px;
-            height: 120px;
+            width: clamp(70px, 18vw, 120px);
+            height: clamp(70px, 18vw, 120px);
             border: 2px dashed rgba(56, 189, 248, 0.4);
             border-radius: 50%;
             animation: arc-spin-clockwise 15s linear infinite;
@@ -225,24 +226,24 @@ function initCommandDeck() {
         }
         .arc-reactor-inner {
             position: absolute;
-            width: 90px;
-            height: 90px;
+            width: clamp(50px, 13vw, 90px);
+            height: clamp(50px, 13vw, 90px);
             border: 3px double rgba(168, 85, 247, 0.4);
             border-radius: 50%;
             animation: arc-spin-counter 7s linear infinite;
         }
         .arc-reactor-coils {
             position: absolute;
-            width: 70px;
-            height: 70px;
+            width: clamp(40px, 10vw, 70px);
+            height: clamp(40px, 10vw, 70px);
             border-radius: 50%;
             background: radial-gradient(circle, rgba(56, 189, 248, 0.18) 20%, transparent 70%);
             animation: arc-pulse 2s alternate infinite ease-in-out;
         }
         .arc-reactor-core {
             position: absolute;
-            width: 32px;
-            height: 32px;
+            width: clamp(18px, 5vw, 32px);
+            height: clamp(18px, 5vw, 32px);
             background: #fff;
             border-radius: 50%;
             box-shadow: 
@@ -268,13 +269,13 @@ function initCommandDeck() {
         .voice-waveform-bars {
             display: inline-flex;
             align-items: center;
-            gap: 3px;
-            height: 15px;
+            gap: clamp(2px, 0.5vw, 3px);
+            height: clamp(10px, 2.5vw, 15px);
             margin-left: 8px;
             vertical-align: middle;
         }
         .waveform-bar {
-            width: 2px;
+            width: clamp(1.5px, 0.4vw, 2px);
             height: 4px;
             background: #10b981;
             border-radius: 1px;
@@ -289,13 +290,13 @@ function initCommandDeck() {
         .voice-waveform-bars.active .waveform-bar:nth-child(5) { animation-delay: 0.6s; }
         @keyframes jump-wave {
             0% { height: 4px; }
-            100% { height: 15px; }
+            100% { height: clamp(10px, 2.5vw, 15px); }
         }
 
-        .hud-stat-row { margin-bottom: 8px; }
+        .hud-stat-row { margin-bottom: clamp(4px, 1vw, 8px); }
         .hud-stat-label {
             color: #475569;
-            font-size: 7.5px;
+            font-size: clamp(7px, 1.5vw, 9px);
             font-weight: bold;
             margin-bottom: 3px;
             display: flex;
@@ -317,7 +318,7 @@ function initCommandDeck() {
         }
         .hud-console-logs {
             flex-grow: 1;
-            font-size: 7.5px;
+            font-size: clamp(7px, 1.5vw, 9px);
             color: #00ffaa;
             overflow-y: auto; 
             line-height: 1.4;
@@ -326,14 +327,14 @@ function initCommandDeck() {
         }
         .hud-mini-canvas {
             width: 100%;
-            height: 70px;
+            height: clamp(50px, 10vh, 70px);
             background: rgba(4, 8, 16, 0.9);
             border: 1px solid rgba(56, 189, 248, 0.1);
             border-radius: 4px;
             margin-bottom: 10px;
         }
         .hud-close-btn {
-            font-size: 20px;
+            font-size: clamp(16px, 4vw, 20px);
             cursor: pointer;
             line-height: 1;
             transition: color 0.2s, transform 0.2s;
@@ -345,36 +346,37 @@ function initCommandDeck() {
         }
         .hud-main-title {
             color: #38bdf8;
-            font-size: 15px;
+            font-size: clamp(12px, 3vw, 16px);
             font-weight: bold;
-            letter-spacing: 4px;
+            letter-spacing: clamp(2px, 0.6vw, 4px);
             text-shadow: 0 0 8px rgba(56, 189, 248, 0.35);
             margin-bottom: 2px;
         }
         .hud-subtitle {
             color: #475569;
-            font-size: 8px;
+            font-size: clamp(7px, 1.5vw, 9px);
             letter-spacing: 1.2px;
-            margin-bottom: 15px;
+            margin-bottom: clamp(8px, 2vw, 15px);
         }
         .hud-drug-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            margin-bottom: 15px;
+            gap: clamp(4px, 1vw, 6px);
+            margin-bottom: clamp(8px, 2vw, 15px);
         }
         .hud-drug-btn {
             background: rgba(56, 189, 248, 0.05);
             border: 1px solid rgba(56, 189, 248, 0.15);
             color: rgba(56, 189, 248, 0.7);
             font-family: 'Courier New', monospace;
-            font-size: 8px;
+            font-size: clamp(7px, 1.5vw, 9px);
             font-weight: bold;
-            padding: 6px 3px;
+            padding: clamp(4px, 1vw, 8px) clamp(3px, 0.8vw, 6px);
             cursor: pointer;
             border-radius: 3px;
             transition: all 0.2s ease;
             text-align: center;
+            touch-action: manipulation;
         }
         .hud-drug-btn:hover {
             background: rgba(56, 189, 248, 0.18);
@@ -388,7 +390,7 @@ function initCommandDeck() {
             text-shadow: 0 0 4px #fff;
         }
         .hud-interactive-hint {
-            font-size: 7.5px;
+            font-size: clamp(7px, 1.5vw, 9px);
             color: rgba(0, 240, 255, 0.35);
             letter-spacing: 0.8px;
             margin-top: 10px;
@@ -399,16 +401,17 @@ function initCommandDeck() {
             border: 1px solid rgba(168, 85, 247, 0.4);
             color: #e9d5ff;
             font-family: 'Courier New', monospace;
-            font-size: 9px;
+            font-size: clamp(8px, 1.8vw, 10px);
             font-weight: bold;
             letter-spacing: 1.5px;
-            padding: 8px 18px;
+            padding: clamp(6px, 1.5vw, 10px) clamp(12px, 3vw, 20px);
             cursor: pointer;
             border-radius: 4px;
             text-shadow: 0 0 6px rgba(168, 85, 247, 0.6);
             box-shadow: inset 0 0 10px rgba(168, 85, 247, 0.1), 0 0 15px rgba(168, 85, 247, 0.2);
             transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             z-index: 10;
+            touch-action: manipulation;
         }
         .hud-center-launch-btn:hover {
             background: rgba(168, 85, 247, 0.35);
@@ -419,28 +422,153 @@ function initCommandDeck() {
         }
         .hud-main-grid {
             display: grid;
-            grid-template-columns: 310px 1fr 310px;
-            gap: 15px;
-            height: calc(100% - 44px);
+            grid-template-columns: clamp(240px, 30vw, 310px) 1fr clamp(240px, 30vw, 310px);
+            gap: clamp(8px, 1.5vw, 15px);
+            height: calc(100% - clamp(36px, 6vh, 44px));
         }
         @media (max-width: 1024px) {
             .chod-brain-monitor {
                 overflow-y: auto;
-                padding: 10px;
+                padding: clamp(8px, 1.5vw, 12px);
             }
             .hud-main-grid {
                 grid-template-columns: 1fr;
                 height: auto;
                 overflow: visible;
-                gap: 15px;
+                gap: clamp(8px, 1.5vw, 15px);
             }
             .hud-panel {
-                margin-bottom: 5px;
+                margin-bottom: 4px;
                 overflow: visible;
             }
-            .hud-canvas-container { height: 40vh; }
-            .hud-main-title { font-size: 13px; letter-spacing: 2px; text-align: center; }
-            .hud-subtitle { font-size: 7px; text-align: center; margin-bottom: 8px; }
+            .hud-canvas-container { 
+                height: clamp(30vh, 45vw, 50vh); 
+            }
+            .hud-main-title { 
+                font-size: clamp(12px, 3vw, 16px); 
+                letter-spacing: 2px; 
+                text-align: center; 
+            }
+            .hud-subtitle { 
+                font-size: clamp(7px, 1.5vw, 9px); 
+                text-align: center; 
+                margin-bottom: 8px; 
+            }
+            .hud-console-logs {
+                height: clamp(60px, 15vh, 120px) !important;
+                max-height: clamp(60px, 15vh, 120px) !important;
+            }
+        }
+        @media (max-width: 480px) {
+            .chod-brain-monitor {
+                padding: 6px;
+            }
+            .hud-panel {
+                padding: clamp(6px, 1.2vw, 10px);
+            }
+            .hud-drug-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 4px;
+            }
+            .hud-drug-btn {
+                font-size: clamp(6px, 1.8vw, 8px);
+                padding: clamp(4px, 1vw, 6px) 3px;
+            }
+            .hud-panel-title {
+                font-size: clamp(7px, 2vw, 9px);
+                letter-spacing: 1px;
+            }
+            .hud-stat-label {
+                font-size: clamp(6px, 1.8vw, 8px);
+            }
+            .arc-reactor-container {
+                width: clamp(60px, 25vw, 90px);
+                height: clamp(60px, 25vw, 90px);
+            }
+            .arc-reactor-outer {
+                width: clamp(55px, 23vw, 85px);
+                height: clamp(55px, 23vw, 85px);
+            }
+            .arc-reactor-inner {
+                width: clamp(40px, 17vw, 65px);
+                height: clamp(40px, 17vw, 65px);
+            }
+            .arc-reactor-coils {
+                width: clamp(30px, 13vw, 50px);
+                height: clamp(30px, 13vw, 50px);
+            }
+            .arc-reactor-core {
+                width: clamp(14px, 6vw, 24px);
+                height: clamp(14px, 6vw, 24px);
+            }
+            #chod-plexus-canvas {
+                max-width: clamp(200px, 80vw, 400px);
+                max-height: clamp(200px, 80vw, 400px);
+            }
+            .hud-center-launch-btn {
+                font-size: clamp(7px, 2vw, 9px);
+                padding: clamp(5px, 1.5vw, 8px) clamp(10px, 3vw, 16px);
+            }
+            .hud-interactive-hint {
+                font-size: clamp(6px, 1.8vw, 8px);
+            }
+        }
+        @media (max-height: 500px) and (orientation: landscape) {
+            .chod-brain-monitor {
+                padding: 6px 12px;
+                overflow-y: auto;
+            }
+            .hud-main-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+                height: auto;
+            }
+            .hud-canvas-container {
+                height: clamp(25vh, 50vh, 55vh);
+            }
+            .hud-panel {
+                padding: 6px 8px;
+            }
+            .hud-panel-title {
+                font-size: clamp(6px, 1.2vw, 8px);
+                margin-bottom: 4px;
+                padding-bottom: 3px;
+            }
+            .hud-stat-row {
+                margin-bottom: 3px;
+            }
+            .hud-stat-label {
+                font-size: clamp(5px, 1vw, 7px);
+            }
+            .arc-reactor-container {
+                width: clamp(50px, 12vh, 80px);
+                height: clamp(50px, 12vh, 80px);
+                margin: 6px auto;
+            }
+            .hud-drug-btn {
+                font-size: clamp(5px, 1vw, 7px);
+                padding: 2px 4px;
+            }
+            .hud-console-logs {
+                height: clamp(40px, 8vh, 60px) !important;
+                max-height: clamp(40px, 8vh, 60px) !important;
+                font-size: clamp(5px, 1vw, 7px);
+            }
+            .hud-mini-canvas {
+                height: clamp(30px, 6vh, 50px);
+            }
+            .hud-main-title {
+                font-size: clamp(10px, 2vh, 14px);
+                letter-spacing: 1px;
+            }
+            .hud-subtitle {
+                font-size: clamp(5px, 1vw, 7px);
+                margin-bottom: 4px;
+            }
+            #chod-plexus-canvas {
+                max-width: clamp(180px, 35vh, 350px);
+                max-height: clamp(180px, 35vh, 350px);
+            }
         }
         @keyframes pulse-op {
             0% { opacity: 0.3; }
@@ -458,22 +586,22 @@ function initCommandDeck() {
             background: rgba(56, 189, 248, 0.04);
             border: 1px solid rgba(56, 189, 248, 0.15);
             border-radius: 6px;
-            height: 36px;
+            height: clamp(30px, 5vh, 36px);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 15px;
+            padding: 0 clamp(10px, 2vw, 15px);
             cursor: move;
-            font-size: 8.5px;
+            font-size: clamp(7px, 1.5vw, 9px);
             color: #38bdf8;
             letter-spacing: 1px;
-            margin-bottom: 12px;
+            margin-bottom: clamp(6px, 1.2vw, 12px);
             text-shadow: 0 0 5px rgba(56, 189, 248, 0.3);
             flex-shrink: 0;
         ">
-            <span>⚡ TROJAN-AI COMMAND DECK (สะพานเดินเรือควบคุม)</span>
-            <div style="display: flex; gap: 15px; align-items: center;">
-                <span id="hud-toggle-mic" style="cursor: pointer; color: #10b981; font-weight: bold; transition: color 0.2s;">
+            <span>⚡ TROJAN-AI COMMAND DECK</span>
+            <div style="display: flex; gap: clamp(8px, 2vw, 15px); align-items: center; flex-shrink: 0;">
+                <span id="hud-toggle-mic" style="cursor: pointer; color: #10b981; font-weight: bold; transition: color 0.2s; font-size: clamp(6px, 1.3vw, 8px); white-space: nowrap;">
                     [ ไมค์: ปิด 🎙️ ]
                     <span class="voice-waveform-bars" id="voiceWaveBars">
                         <span class="waveform-bar"></span>
@@ -483,7 +611,7 @@ function initCommandDeck() {
                         <span class="waveform-bar"></span>
                     </span>
                 </span>
-                <span id="hud-toggle-size" style="cursor: pointer; color: #a855f7; font-weight: bold;">[ โหมดหน้าต่างลอย ]</span>
+                <span id="hud-toggle-size" style="cursor: pointer; color: #a855f7; font-weight: bold; font-size: clamp(6px, 1.3vw, 8px); white-space: nowrap;">[ หน้าต่างลอย ]</span>
                 <span class="hud-close-btn" onclick="if(window.ChodBrainMonitor) window.ChodBrainMonitor.hide(); else this.closest('.chod-brain-monitor').classList.remove('active');">&times;</span>
             </div>
         </div>
@@ -509,7 +637,7 @@ function initCommandDeck() {
                     <div class="hud-stat-label">เซโรโทนิน (5-HT - ความเสถียรลึก) <span id="val-ser">0%</span></div>
                     <div class="hud-progress-bar-bg"><div id="hud-ser-fill" class="hud-progress-bar-fill" style="background: #38bdf8;"></div></div>
                 </div>
-                <div class="hud-stat-row" style="margin-bottom: 15px;">
+                <div class="hud-stat-row" style="margin-bottom: clamp(8px, 2vw, 15px);">
                     <div class="hud-stat-label">อะดรีนาลีน (EPI - การเฝ้าระวัง) <span id="val-adr">0%</span></div>
                     <div class="hud-progress-bar-bg"><div id="hud-adr-fill" class="hud-progress-bar-fill" style="background: #eab308;"></div></div>
                 </div>
@@ -526,7 +654,7 @@ function initCommandDeck() {
                 </div>
 
                 <div class="hud-panel-title">🎨 ชุดสีระบบแสงสเปกตรัมเชื่อมโยง HUD</div>
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 15px;">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(3px, 0.8vw, 5px); margin-bottom: clamp(8px, 2vw, 15px);">
                     <div class="hud-drug-btn" id="theme-aqua" style="border-color: #38bdf8; color: #38bdf8;">อควา</div>
                     <div class="hud-drug-btn" id="theme-green" style="border-color: #22c55e; color: #22c55e;">เมทริกซ์</div>
                     <div class="hud-drug-btn" id="theme-magenta" style="border-color: #d946ef; color: #d946ef;">ไซเบอร์</div>
@@ -535,17 +663,18 @@ function initCommandDeck() {
 
                 <div class="hud-panel-title">🖥️ บันทึกประจุประสาท & คำสั่ง CLI</div>
                 <div style="display: flex; flex-direction: column; flex-grow: 1; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(56, 189, 248, 0.1); border-radius: 4px; padding: 6px;">
-                    <div id="hud-terminal-logs" class="hud-console-logs" style="height: 120px; max-height: 120px; overflow-y: auto;"></div>
+                    <div id="hud-terminal-logs" class="hud-console-logs" style="height: clamp(60px, 15vh, 120px); max-height: clamp(60px, 15vh, 120px); overflow-y: auto;"></div>
                     <div style="display: flex; gap: 5px; margin-top: 5px; border-top: 1px solid rgba(56, 189, 248, 0.15); padding-top: 5px;">
-                        <span style="color: #00ffaa; font-size: 7.5px; font-family: monospace; align-self: center;">&gt;</span>
-                        <input id="hud-cli" type="text" placeholder="ป้อนคำสั่งระบบ (เช่น status, bypass, reset)..." style="
+                        <span style="color: #00ffaa; font-size: clamp(7px, 1.5vw, 9px); font-family: monospace; align-self: center;">&gt;</span>
+                        <input id="hud-cli" type="text" placeholder="ป้อนคำสั่งระบบ..." style="
                             background: transparent;
                             border: none;
                             color: #00ffaa;
                             font-family: monospace;
-                            font-size: 7.5px;
+                            font-size: clamp(7px, 1.5vw, 9px);
                             flex-grow: 1;
                             outline: none;
+                            min-height: clamp(20px, 4vh, 30px);
                         ">
                     </div>
                 </div>
@@ -554,17 +683,14 @@ function initCommandDeck() {
             <!-- PANEL กลาง: เรดาร์ Circular Radar HUD & Connectome 3D -->
             <div class="hud-center-area">
                 <div class="hud-main-title">CHOD CONNECTOME HYPER-MAP</div>
-                <div id="hud-system-status" class="hud-subtitle">การฉายแสง: โครงสร้าง 3 มิติ // แรงดึงสปริง: ทำงาน // สัญญาณเชื่อมต่อ IOT: พร้อมใช้งาน</div>
+                <div id="hud-system-status" class="hud-subtitle">การฉายแสง: โครงสร้าง 3 มิติ // แรงดึงสปริง: ทำงาน</div>
                 
                 <div class="hud-canvas-container" id="canvas-interaction-zone">
-                    <!-- Circular Radar HUD Layer -->
                     <div class="radar-hud-grid"></div>
                     <div class="radar-scan-line"></div>
-                    
                     <canvas id="chod-plexus-canvas"></canvas>
                 </div>
 
-                <!-- คอร์ปฏิกรณ์พลังงานพลังงานหมุน (Arc Reactor Core) -->
                 <div class="arc-reactor-container">
                     <div class="arc-reactor-outer"></div>
                     <div class="arc-reactor-inner"></div>
@@ -572,8 +698,8 @@ function initCommandDeck() {
                     <div class="arc-reactor-core"></div>
                 </div>
 
-                <button class="hud-center-launch-btn" id="btn-center-screen2">🖥️ ย้ายไปหน้าจอที่ 2 (GO TO SCREEN 2)</button>
-                <div class="hud-interactive-hint">[ คลิกปุ่มไมโครโฟนเพื่อส่งสัญญานคำสั่ง IoT และพูดคุยกับคุณโชด ]</div>
+                <button class="hud-center-launch-btn" id="btn-center-screen2">🖥️ ย้ายไปหน้าจอที่ 2</button>
+                <div class="hud-interactive-hint">[ คลิกปุ่มไมโครโฟนเพื่อส่งสัญญานคำสั่ง IoT ]</div>
             </div>
 
             <!-- PANEL ขวา: EEG และ สถิติทอพอโลจีกราฟวิเคราะห์สมอง -->
@@ -583,16 +709,16 @@ function initCommandDeck() {
                 <div class="hud-panel-title">📊 ระบบวิเคราะห์สัญญาณรบกวนคลื่นสเปกตรัม</div>
                 <canvas id="hud-spectrum-canvas" class="hud-mini-canvas"></canvas>
                 
-                <div class="hud-panel-title">⚠️ เมทริกซ์เสถียรภาพสติปัญญาของ AI ( stabilité )</div>
-                <div style="font-size: 8px; color: #475569; line-height: 1.6; font-family: monospace; margin-bottom: 12px;">
-                    ระดับความตื่นรู้ของสติ (Sentience): <span id="hud-sentience" style="color: #10b981;">14.208%</span><br>
-                    การกระเจิงกระบวนการคิด (Cognitive Drift): <span id="hud-drift" style="color: #38bdf8;">0.00%</span><br>
-                    อุณหภูมิแกนประมวลผล (Synaptic Temp): <span id="hud-temp" style="color: #38bdf8;">36.5 °C</span>
+                <div class="hud-panel-title">⚠️ เมทริกซ์เสถียรภาพสติปัญญาของ AI</div>
+                <div style="font-size: clamp(7px, 1.5vw, 9px); color: #475569; line-height: 1.6; font-family: monospace; margin-bottom: clamp(6px, 1.2vw, 12px);">
+                    ระดับความตื่นรู้ของสติ: <span id="hud-sentience" style="color: #10b981;">14.208%</span><br>
+                    การกระเจิงกระบวนการคิด: <span id="hud-drift" style="color: #38bdf8;">0.00%</span><br>
+                    อุณหภูมิแกนประมวลผล: <span id="hud-temp" style="color: #38bdf8;">36.5 °C</span>
                 </div>
 
                 <div class="hud-panel-title">🔐 รหัสจำลองถอดรหัสไซเฟอร์เชิงควอนตัม</div>
                 <div id="decrypt-cipher" style="
-                    font-size: 7.5px;
+                    font-size: clamp(6px, 1.3vw, 8px);
                     font-family: monospace;
                     color: #eab308;
                     background: rgba(0,0,0,0.4);
@@ -600,14 +726,14 @@ function initCommandDeck() {
                     border-radius: 3px;
                     border: 1px solid rgba(234, 179, 8, 0.15);
                     text-align: center;
-                    margin-bottom: 12px;
+                    margin-bottom: clamp(6px, 1.2vw, 12px);
                     letter-spacing: 1px;
                 ">
                     กุญแจรหัส: กำลังวิเคราะห์สถานะ...
                 </div>
 
                 <div class="hud-panel-title">⚙️ ดัชนีโครงสร้างวิเคราะห์ทอพอโลจีกราฟขั้นสูง</div>
-                <div style="font-size: 8px; color: #475569; line-height: 1.6; font-family: monospace; margin-bottom: 12px;">
+                <div style="font-size: clamp(7px, 1.5vw, 9px); color: #475569; line-height: 1.6; font-family: monospace; margin-bottom: clamp(6px, 1.2vw, 12px);">
                     สัมประสิทธิ์การรวมกลุ่ม (C): <span id="hud-clustering" style="color: #a855f7;">0.0000</span><br>
                     ดัชนีคุณลักษณะสมอง (σ): <span id="hud-smallworld" style="color: #22c55e;">0.0000</span><br>
                     ประสิทธิภาพโครงข่ายสากล (Eg): <span id="hud-efficiency" style="color: #00f0ff;">0.0000</span><br>
@@ -618,7 +744,7 @@ function initCommandDeck() {
                 </div>
 
                 <div class="hud-panel-title">🩺 บันทึกตรวจวิเคราะห์ฮาร์ดแวร์สถานีหลัก</div>
-                <div style="font-size: 8px; color: #475569; line-height: 1.6; font-family: monospace;">
+                <div style="font-size: clamp(7px, 1.5vw, 9px); color: #475569; line-height: 1.6; font-family: monospace;">
                     ค่าหน่วงเวลาระบบ IoT (Ping): <span id="hud-ping-metric" style="color: #ef4444;">กำลังตรวจสัญญาน...</span><br>
                     ความเร็วการวาดเฟรม (Refresh Rate): <span id="hud-fps-metric" style="color: #22c55e;">0 เฟรมต่อวินาที</span><br>
                     สถานะพลังงานแผงพลังงานสำรอง: <span id="hud-battery-metric" style="color: #38bdf8;">🔋 100%</span>
@@ -666,7 +792,6 @@ function initCommandDeck() {
         
         if (typeof injectLog === 'function') injectLog(`PHARMA SYSTEM: PURGING ALL XENOBIOTICS. FLUSHED.`);
         
-        // ส่งคำสั่งรีเซ็ตตัดสัญญานรีเลย์ทั้งหมด
         if (window.MrChodButlerInstance && window.MrChodButlerInstance.iotController) {
             for (let i = 1; i <= 6; i++) {
                 window.MrChodButlerInstance.iotController.executeCommand(i, false);
@@ -702,7 +827,7 @@ function initCommandDeck() {
     document.addEventListener("mouseup", dragEnd);
     document.addEventListener("mousemove", drag);
 
-    // ระบบเชื่อมต่อไมค์ และเปิดใช้แอนิเมชันคลื่นเสียง (AI Voice Waveform)
+    // ระบบเชื่อมต่อไมค์
     const micToggleBtn = document.getElementById("hud-toggle-mic");
     const waveBars = document.getElementById("voiceWaveBars");
     if (micToggleBtn) {
@@ -816,8 +941,8 @@ function setWindowed(windowed) {
 
     if (typeof isWindowed !== 'undefined') isWindowed = windowed;
     if (windowed) {
-        hud.style.width = "1280px";
-        hud.style.height = "820px";
+        hud.style.width = "clamp(320px, 80vw, 1280px)";
+        hud.style.height = "clamp(400px, 80vh, 820px)";
         hud.style.top = yOffset + "px";
         hud.style.left = xOffset + "px";
         hud.style.borderRadius = "12px";
@@ -828,12 +953,13 @@ function setWindowed(windowed) {
     } else {
         hud.style.width = "100vw";
         hud.style.height = "100vh";
+        hud.style.height = "100dvh";
         hud.style.top = "0";
         hud.style.left = "0";
         hud.style.borderRadius = "0";
         hud.style.border = "none";
         hud.style.boxShadow = "none";
-        if (toggleSizeBtn) toggleSizeBtn.innerText = "[ โหมดหน้าต่างลอย ]";
+        if (toggleSizeBtn) toggleSizeBtn.innerText = "[ หน้าต่างลอย ]";
         if (typeof injectLog === 'function') injectLog("SYSTEM: SWITCHED TO FULLSCREEN MODE.");
     }
 }
@@ -845,7 +971,7 @@ function dragStart(e) {
 
     const currentIsWindowed = typeof isWindowed !== 'undefined' ? isWindowed : false;
     if (!currentIsWindowed) {
-        if (typeof xOffset !== 'undefined') xOffset = e.clientX - 640; 
+        if (typeof xOffset !== 'undefined') xOffset = e.clientX - 320; 
         if (typeof yOffset !== 'undefined') yOffset = e.clientY - 15;
         setWindowed(true);
     }
@@ -1064,7 +1190,7 @@ function initInteractiveCLI() {
                     }
                 }, 1000);
             } else {
-                if (typeof injectLog === 'function') injectLog(`ข้อผิดพลาดระบบ: ไม่พบคำสั่ง "${lowerCmd.toUpperCase()}" ในสารบบ`);
+                if (typeof injectLog === 'function') injectLog(`ข้อผิดพลาดระบบ: ไม่พบคำสั่ง "${lowerCmd.toUpperCase()}" ในสารบรรณ`);
             }
         }
     });
